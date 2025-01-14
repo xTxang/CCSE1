@@ -2,31 +2,12 @@ from flask import Flask, request, render_template, redirect, url_for
 import flask
 from database import Database #Imports session and products from database.py to populate the e-commerce
 from flask_login import LoginManager
- 
-#^^^ Session and products have to be passeed as class potentially?
+from flask_sqlalchemy import SQLAlchemy 
+
 db = Database()# intialises the database object
-
-# print(database.product_list)
-
-
-
-# for product in initDb.product_list:
-#         print(f"ID: {product.productID}, Name: {product.productName}, Cost: {product.productCost}, Image: {product.productImg}, Quantity: {product.productQuant}")
 
 def numberCheck(word):
     return any(i.isdigit() for i in word)
-
-# print(products)
-
-# print(initDb)
-# session = initDb
-# print(session)
-
-# products_list = session.query(products).all()
-
-# Print the queried data to the console for debugging
-# print(products_list)
-
 
 app = Flask(__name__)
 
@@ -105,7 +86,11 @@ def login():
                 return render_template('login.html', failed_login=True)
             else:
                 print('worked')
-                return redirect('/shop')
+                userId = returnedUser.userID
+                print(userId)
+                return redirect(f'/shop/{userId}')
+
+            
             
 
             #TODO Check if login is in database, then if good, send back to shop page
@@ -140,11 +125,31 @@ def signup():
     return render_template("shop.html")
 
 
-@app.route('/shop')
-def shop():
-    #TODO how do i do auth i cant do it
+# @app.route('/shop')
+# def shop():
+#     #TODO how do i do auth i cant do it
 
-    return render_template('shop.html')
+#     return render_template('shop.html')
+
+
+
+@app.route('/shop/<userId>')
+def userShop(userId):
+    print(userId)
+    product_list = db.returnProducts()
+    return render_template('userShop.html', products=product_list)
+
+
+@app.route('/logout')
+def logout():
+    print('hello')
+    return redirect('/index')
+
+@app.route('/basket/<userId>')
+
+def basket(userId):
+    """Redirects to the basket of a specific user when the button is pressed on their webpage"""
+    print(f'User ID: {userId}')
 
 if __name__ == '__main__':
     app.run(debug=True)
