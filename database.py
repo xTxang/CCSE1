@@ -16,11 +16,16 @@ class products(Base):
     productQuant = Column(Integer, nullable=False)
 
 class basket(Base):
+    """intialise the basket table, containing both customers and admins"""
+    __tablename__ = "basket"
     basketID = Column(Integer, primary_key=True)
     userID = Column(Integer, ForeignKey("user.userID"), nullable=True)
     productID = Column(Integer, ForeignKey("products.productID"), nullable=True)
     basketQuant = Column(Integer, nullable=False)
     basketPrice = Column(Float, nullable=False)
+    itemName = Column(String, nullable=False)
+
+
 
 class user(Base):
     """intialise the user table, containing both customers and admins"""
@@ -82,6 +87,17 @@ class Database():
         # # Query all products from the database
         # session.close()
 
+
+        new_product = products(
+            productName="Example Product",
+            productCost=999.99,
+            productImg="example.jpg",
+            productQuant=10
+        )
+        with self._sessionOpen.begin() as session:
+
+            session.add(new_product)
+
     def store_username(self, username: str, password: str):
         self.new_password = password
         self.new_username = username
@@ -121,6 +137,45 @@ class Database():
         with self._sessionOpen() as session:
             self.product_list = session.query(products).all()
         return self.product_list
+    
+
+    def addtoBasket(self, userId, productId, quantity):
+        """adds an item from the shop page to a specific user's basket"""
+        with self._sessionOpen.begin() as session:#creataes an entry into the basket table
+            basketItem = session.query(basket).filter_by(userID=userId, productID=productId).first()#Used to check if item is already in basket
+
+            product = session.query(products).filter_by(productID=productId).first()#Retrieve product by comparing id, used to check total in stock and price
+
+            totalPrice = quantity * product.productCost
+
+            if quantity > product.productQuant:#there is not enough stock
+                return False
+
+            if basketItem:#if item is already in basket adds the extra amount
+                basketItem.basketQuant = basket.basketQuant + quantity
+                basketItem.basketPrice = basket.basketPrice + totalPrice
+
+            else:#item is not in basket already, adds it
+              basketItem = basket(
+                  userID = userId,
+                  productID = productId,
+                  basketQuant = quantity,
+                  basketPrice = totalPrice,
+                  itemName = product.productName
+              )
+            session.add(basketItem)
+
+    def getBasket(self,userId):
+        """Runs when the basket page of a user is opened, finding all items added items linked to their ID"""
+        print(userId)
+        with self._sessionOpen() as session:
+            self.basketItems = session.query(basket).filter_by(userID = userId).all()
+
+        return self.basketItems
+
+
+        # If needed, you can return more detailed product information by joining with the products table
+
 
 
 

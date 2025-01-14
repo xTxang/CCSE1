@@ -35,16 +35,14 @@ def index():
 
 
     # products = session.query(products).all()
-
     # Render the 'index.html' template, passing the products data
-
     product_list = db.returnProducts()
     return render_template('shop.html', products=product_list)
    # return render_template('shop.html')  # Fixed "dashboad" typo
 
-@app.route('/basket')
-def basket():
-    return render_template('basket.html')  # Render the basket template when this route is accessed
+# @app.route('/basket')
+# def basket():
+#     return render_template('basket.html')  # Render the basket template when this route is accessed
 
 # @app.route('/login', methods=['POST'])
 # def login():
@@ -122,7 +120,8 @@ def signup():
         print(postcode)
 
         db.createUser(name, houseNum, street, city, postcode)
-    return render_template("shop.html")
+        return redirect('/shop/<userId>')
+    return render_template("signup.html")
 
 
 # @app.route('/shop')
@@ -133,11 +132,31 @@ def signup():
 
 
 
-@app.route('/shop/<userId>')
+@app.route('/shop/<userId>', methods = ['GET','POST'])
 def userShop(userId):
     print(userId)
     product_list = db.returnProducts()
-    return render_template('userShop.html', products=product_list)
+
+    if request.method == 'POST':
+        print('hello')
+        productID = request.form.get('productId')
+        quantity = int(request.form.get('quant'))
+        if quantity > 2:
+            quantity = quantity+1#because the counter starts at 1, it otherwise shows 1 below
+
+        db.addtoBasket(userId, productID, quantity)
+
+        print(productID)
+        print(quantity)
+        # requestedproductID = request.form.get('')
+        # db.addtoBasket()
+
+
+
+
+
+
+    return render_template('userShop.html', products=product_list, userId=userId)
 
 
 @app.route('/logout')
@@ -146,10 +165,16 @@ def logout():
     return redirect('/index')
 
 @app.route('/basket/<userId>')
-
 def basket(userId):
     """Redirects to the basket of a specific user when the button is pressed on their webpage"""
-    print(f'User ID: {userId}')
+    basketItems = db.getBasket(userId)
+
+    for basketItem in basketItems:
+        print(basketItem.itemName)
+    
+    return render_template('basket.html', basketItems=basketItems, userId=userId)
+
+    
 
 if __name__ == '__main__':
     app.run(debug=True)
