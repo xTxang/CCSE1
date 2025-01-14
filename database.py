@@ -15,7 +15,12 @@ class products(Base):
     productImg = Column(String(200), nullable=False)
     productQuant = Column(Integer, nullable=False)
 
-
+class basket(Base):
+    basketID = Column(Integer, primary_key=True)
+    userID = Column(Integer, ForeignKey("user.userID"), nullable=True)
+    productID = Column(Integer, ForeignKey("products.productID"), nullable=True)
+    basketQuant = Column(Integer, nullable=False)
+    basketPrice = Column(Float, nullable=False)
 
 class user(Base):
     """intialise the user table, containing both customers and admins"""
@@ -64,10 +69,10 @@ class productOrder(Base):
 
 class Database():
     def __init__(self):
-        engine = create_engine('sqlite:///database.db')#Creates database with  the name database.db
+        self.engine = create_engine('sqlite:///database.db')#Creates database with  the name database.db
         # Create all tables
-        Base.metadata.create_all(engine)
-        self._sessionOpen = sessionmaker(bind=engine)
+        Base.metadata.create_all(self.engine)
+        self._sessionOpen = sessionmaker(bind=self.engine)
         # session = Session()#Creates a session instance
 
         self.new_username = ""
@@ -76,6 +81,7 @@ class Database():
 
         # # Query all products from the database
         # session.close()
+
     def store_username(self, username: str, password: str):
         self.new_password = password
         self.new_username = username
@@ -103,13 +109,13 @@ class Database():
     def search_user(self, enteredUser,enteredPass):
         with self._sessionOpen() as session:
             requestedUser = session.query(user).filter_by(userLogin=enteredUser, userPass=enteredPass).first()
-
-
             if requestedUser:
                 return requestedUser
             else:
                 return None
-
+            
+    def getuserfromID(self, ID):
+        """Used to retrieve user data from user id, in order for user specific pages"""
 
     def returnProducts(self):   
         with self._sessionOpen() as session:
