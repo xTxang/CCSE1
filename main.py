@@ -4,6 +4,10 @@ from database import Database #Imports session and products from database.py to 
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy 
 
+#TODO add user roles
+#TODO add admin roles(use authorisation code to add admin?)
+
+
 db = Database()# intialises the database object
 
 def numberCheck(word):
@@ -32,8 +36,6 @@ def index():
     # session = initDb
     # print(session)
     # print(products)
-
-
     # products = session.query(products).all()
     # Render the 'index.html' template, passing the products data
     product_list = db.returnProducts()
@@ -102,6 +104,64 @@ def login():
                 return redirect('/signup')
     return render_template('login.html')
 
+@app.route('/admin', methods=['GET','POST'])#TODO remove get when fully implemented
+def adminDash():
+    """Basic route for admin functionality, facilitating adding products and editing products"""
+    print('test')
+
+    if request.method == "POST":
+        action = request.form.get("action")  # Get the button value
+        print(f"Action received: {action}")
+        if action == "view":
+            product_list = db.returnProducts()
+            return render_template('adminDash.html', action="view", products=product_list)
+        
+
+        elif action == 'remove':#Remove an item
+            productId = request.form.get('productID')
+            print('This is the product ID:', productId)
+            db.removeProduct(productId)
+            #TODO add are you sure message
+            #TODO add success message
+        
+        elif action == 'quantity':#Change quantity in stock of item
+            productId = request.form.get('productId')
+            newQuantity = request.form.get('quantity')
+            print(productId)
+            print(newQuantity)
+            db.changeProductQuant(productId,newQuantity)
+            #TODO add frontend success message
+        
+        elif action == "add":#When admin wants to add a product
+            return render_template('adminDash.html', action="add")
+        
+
+        elif action == 'submitProduct':
+            print('is this working??')
+            productName = request.form.get('prodName')
+            productCost = request.form.get('prodCost')
+            productImg = request.form.get('productImg')
+            productQuant = request.form.get('productQuant')
+
+            
+            newProductID = db.createProduct(productName,productCost,productImg,productQuant)
+
+            return render_template('adminDash.html', newProductID=newProductID)
+
+
+
+                #TODO check if there is an item with the same name?
+
+
+
+
+        
+
+    return render_template('adminDash.html', action = None)
+
+#add produtcs, change prices+stock, remove products
+
+
 
 @app.route('/signup', methods=['GET','POST'])
 def signup():
@@ -165,7 +225,7 @@ def logout():
     return redirect('/index')
 
 @app.route('/basket/<userId>')
-def basket(userId):
+def basket(userId):#TODO add to the html item is unavailable
     """Redirects to the basket of a specific user when the button is pressed on their webpage"""
     basketItems = db.getBasket(userId)
 

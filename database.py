@@ -1,5 +1,5 @@
 from cryptography.fernet import Fernet
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey, Enum, update, Float, PrimaryKeyConstraint
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey, Enum, update, Float, PrimaryKeyConstraint, Boolean
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship, Mapped
 
 Base = declarative_base()
@@ -24,6 +24,7 @@ class basket(Base):
     basketQuant = Column(Integer, nullable=False)
     basketPrice = Column(Float, nullable=False)
     itemName = Column(String, nullable=False)
+    itemAvailability = Column(Boolean, default = True, nullable=False)
 
 
 
@@ -87,17 +88,6 @@ class Database():
         # # Query all products from the database
         # session.close()
 
-
-        new_product = products(
-            productName="Example Product",
-            productCost=999.99,
-            productImg="example.jpg",
-            productQuant=10
-        )
-        with self._sessionOpen.begin() as session:
-
-            session.add(new_product)
-
     def store_username(self, username: str, password: str):
         self.new_password = password
         self.new_username = username
@@ -120,6 +110,29 @@ class Database():
         )
         with self._sessionOpen.begin() as session:
             session.add(new_user)
+
+    def createProduct(self,productName,productCost,productImg,productQuant):
+        try:#This increments product ID by 1 for the new product :) TODO, must be a better way to do this(leads to gaps when items are removed?)
+            x = x + 1
+        except NameError:
+            x = 1
+
+        newProduct = products(
+            productID = x,
+            productName = productName,
+            productCost = productCost,
+            productImg = productImg,
+            productQuant = productQuant
+        )
+
+        with self._sessionOpen.begin() as session:
+            session.add(newProduct)
+
+        
+
+        
+
+        return x
 
 
     def search_user(self, enteredUser,enteredPass):
@@ -172,6 +185,42 @@ class Database():
             self.basketItems = session.query(basket).filter_by(userID = userId).all()
 
         return self.basketItems
+
+
+    def removeProduct(self, productId):
+        """Finds item to remove via product id, removes from database"""
+
+        with self._sessionOpen() as session:#Finds product via id, deletes and commits changes
+            product = session.query(products).filter_by(productID=productId).first()
+
+            iteminBasket = session.query(basket).filter_by(productID = productId).all()#If the item has been removed by an admin, adds unavailable
+
+            if iteminBasket:#Checks if item is in basket, iterates through and sets availability as False
+                for item in iteminBasket:
+                    item.itemAvailability = False
+            else:#The product is not in the basket of a user, no action needs to be taken
+                pass
+
+            print(product)
+            session.delete(product)
+            session.commit() 
+
+
+
+
+
+    def changeProductQuant(self,productId,newQuant):
+        """Changes quantity in stock of an item"""
+
+        with self._sessionOpen() as session:#Finds product via id, changes quantity field
+            product = session.query(products).filter_by(productID=productId).first()
+            product.productQuant = newQuant
+            print(product.productQuant)
+            session.commit()
+
+
+
+
 
 
         # If needed, you can return more detailed product information by joining with the products table

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Basket</title>
+    <link rel="stylesheet" href="/static/CSS/main.css">
+</head>
+<body>
+    {% if not action %}
+    <form method = 'POST'>
+        <div id="button-container">
+            <button type="submit" name="action" value="view" id="view-button">View and edit products</button>
+            <button type="submit" name="action" value="add" id="add-button">Add products</button>
+        </div>
+    </form>
+    {% endif %}
+    {% if action == "view" %}
+        {% for product in products %}
+            <p>Product ID: {{ product.productID }}</p>
+            <h3>{{ product.productName }}</h3>
+            <p>{{ product.productQuant }}</p>
+        <form method = 'POST'>
+            <button type="submit" name="action" value="remove">Remove product</button>
+            <label for="quantity-{{ product.productID }}">New Quantity:</label>
+            <input type="number" id="quantity-{{ product.productID }}" name="quantity" min="1" required>
+            <button type="submit" name="action" value="quantity">Change quantity</button>
+            <!-- Hidden input allows for product ID to be retrieved when either remove or change quantity is pressed. From this, item can be found in db -->
+            <input type="hidden" name="productID" value="{{ product.productID }}">
+        </form>
+
+
+        {% endfor %}
+
+    {% endif %}
+
+    {% if action == "add" %}
+    <form method = 'POST'>
+        <label for="prodName">Name of product:</label>
+        <input type="text" id="prodName" name="prodName" required>
+        <br>
+        <label for="prodCost">Cost: £</label>
+        <input type="number" id="prodCost" name="prodCost" step="0.01" required>
+        <br>
+        <label for="productImg">Product image:</label>
+        <input type="text" id="productImg" name="productImg" required>
+        <br>
+        <label for="productQuant">Total Quantity:</label>
+        <input type="number" id="productQuant" name="productQuant" required>
+        <br>     
+        <button type="submit" name="action" value="submitProduct" id="submit-button">Submit</button>
+    </form>
+    {% endif %}
+
+    {% if newProductID %}
+        <p>A new product has been created with the ID {{newProductID}}</p>
+
+    {% endif %}
+</body>
+</html>
