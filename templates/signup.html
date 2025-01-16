@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Movie Rentals</title>
-    <link href="/styles/main.css" rel="stylesheet" />
+    <link href="/static/CSS/main.css" rel="stylesheet" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -14,37 +14,72 @@
     />
   </head>
 
-<form action="/signup" method="post">
+ 
+<body id="formBody"> 
+
+  <div class="form-container">
+    <p class="title">Sign Up</p>
+    <form action="/signup" method="post">
+
+      <div class="input-group">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" required>
+      </div>
+
+      <div class="input-group">
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required>
+      </div>
 
 
+      <div class="input-group">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required>
+      </div>
+      <div class="input-group">
+        <label for="house">House Number:</label>
+        <input type="number" id="house" name="house" required>
+      </div>
+      <div class="input-group">
+        <label for="street">Street Name:</label>
+        <input type="text" id="street" name="street" required>
+      </div>
 
-    <label for="name">Name:</label>
-    <input type="text" id="name" name="name" required>
-    <br>
+      <div class="input-group">
+        <label for="city">City:</label>
+        <input type="text" id="city" name="city" required>
+      </div>
 
-  <label for="house">House Number:</label>
-  <input type="number" id="house" name="house" required>
-  <br>
-  <label for="street">Street Name:</label>
-  <input type="text" id="street" name="street" required>
-  <br>
-  <label for="city">City:</label>
-  <input type="text" id="city" name="city"
-  required>
-  <br>
-  <label for="Postcode">Postcode:</label>
-  <input type="text" id="postcode" name="postcode"
-  required>
-  <br>
+      <div class="input-group">
+        <label for="Postcode">Postcode:</label>
+        <input type="text" id="postcode" name="postcode" required>
+      </div>
+
+      <button class="sign" type="submit" name="action" value="submit">Submit</button>
 
 
-  <button type="submit" name="action", value="submit">submit</button>
+      {% if failed_signup %}
+        <table >
+          <tr>
+            <td class = "errorCentre">Invalid credentials. Usernames and passwords must be a minimum length of 8 characters and passwords require a number.</td>
+          </tr>
+        </table>  
+      {% endif %}
+    </form>
+  </div>
+
+<!-- 
+
+
+  <button type="submit" name="action", value="submit">submit</button> -->
   {% if failed_login %}
   <p>Invalid Username or Password</p>
   {% endif %}
   {% if error %}
   <p>Invalid Username or Password.</p>
   {% endif %}
-</form>
 
+
+
+</body>
 </html>

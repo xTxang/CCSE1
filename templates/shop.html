@@ -253,7 +253,7 @@
       rel="stylesheet"
     />
   </head>
-  <body>
+  <body id = "shopBody">
     <div class = 'headerbar'>
       <a class="leftButton" href = './shop.html'>Home</a>
       <a class="leftButton" href = './login.html'>Exit</a>
@@ -262,41 +262,32 @@
     </div>
 
     <h1>E-commerce Store</h1>
-    <div class="container">
-      <!-- Iterates through products in database, creates entrty on site for each -->
-      {% for product in products %}
-      <div class="item">
-          <!-- Dynamically set the image source and product details -->
-          <img src="{{ product.productImg }}" alt="Product Image">
-          <h3>{{ product.productName }}</h3>
-          <p>Price: ${{ product.productCost }}</p>
-          <label for="quant">Quantity:</label>
-          <input type="number" id="quant" name="quant" required>
-          <button class="add-btn" onclick="addToCart('{{ product.productName }}')">Add to Cart</button>
-        </div>
-       {% endfor %} 
-    </div>
 
-    <script>
-        // Mock cart for demonstration
-        let cart = [];
 
-        function addToCart(itemName) {
-            cart.push(itemName);
-            alert(`${itemName} added to cart!`);
-            console.log('Cart:', cart);
-        }
+<!-- --------------------l[=] -->
 
-        function removeFromCart(itemName) {
-            const index = cart.indexOf(itemName);
-            if (index !== -1) {
-                cart.splice(index, 1);
-                alert(`${itemName} removed from cart!`);
-            } else {
-                alert(`${itemName} is not in the cart!`);
-            }
-            console.log('Cart:', cart);
-        }
-    </script>
+
+<div class="product-container">
+  {% for product in products %}
+  <div class="product-box">
+
+    <!-- <img src="images\784px-Card_spade.svg-1473127101.jpg" alt="Product Name" class="product-image"> -->
+    <h3 class="title">{{ product.productName }}</h3>
+    <!-- TODO add product description if time  -->
+    <!-- <p class="product-description">Short description of the product.</p> -->
+    <p class="product-price">£{{ product.productCost }}</p>
+    <input class="productInput" type="number" id="quant" name="quant" required>
+    <form method="POST" action="/index">
+    <button class="sign" type = "submit" name="action" value = 'submit'>Add to Cart</button>
+    {% if alert %}
+    <p>Please login </p>
+    {% endif %}
+
+    </form>
+ 
+  </div>
+  {% endfor %}
+</div>
+
 </body>
 </html>

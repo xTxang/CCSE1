@@ -48,16 +48,16 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Movie Rentals</title>
-    <link href="/styles/main.css" rel="stylesheet" />
+    <link href="/static/CSS/main.css" rel="stylesheet" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
+    <!-- <link
       href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap"
       rel="stylesheet"
-    />
+    /> -->
   </head>
 
-
+<!-- 
 <form action="/login" method="post">
   <label for="username">Username:</label>
   <input type="text" id="username" name="username" required>
@@ -76,9 +76,68 @@
   {% endif %}
   {% if failed_signup %}
   <p>Invalid credentials. Usernames and passwords must be a minimum length of 8 characters and passwords require a number</p>
-  {% endif %}
+  {% endif %} -->
 
+<!-- 
 
+  /* From Uiverse.io by Yaya12085 */  -->
+
+<body id="formBody">
+
+  <div class="form-container">
+    <p class="title">Login</p>
+    <form class="form" method = "post">
+      <div class="input-group">
+        <label for="username">Username</label>
+        <input type="text" name="username" id="username" required placeholder="Username">
+      </div>
+      <div class="input-group">
+        <label for="password">Password</label>
+        <input type="password" name="password" id="password" placeholder="Password">
+      </div>
+      <!-- <button class="sign">Sign in</button> -->
+      <button class="sign" type="submit" name="action" value="login">Sign in</button>
+
+    </form>
+    <div class="social-message">
+    <div class="line"></div>
+    <p class="signup">Don't have an account?
+      <!-- <button type="submit" name="action" value="signup">Sign up</button> -->
+      <a rel="noopener noreferrer" href="/signup" class="">Sign up</a>
+    </p>
+
+    </div>
+
+    {% if failed_login %}
+  <table >
+    <tr>
+      <td class = "errorCentre">Invalid Username or Password</td>
+    </tr>
+  </table>
+{% endif %}
+{% if error %}
+  <table >
+    <tr>
+      <td  class = "errorCentre">Invalid Username or Password.</td>
+    </tr>
+  </table>
+{% endif %}
+{% if failed_signup %}
+  <table >
+    <tr>
+      <td class = "errorCentre">Invalid credentials. Usernames and passwords must be a minimum length of 8 characters and passwords require a number.</td>
+    </tr>
+  </table>
+{% endif %}
+
+  </div>
+  </div>
 </form>
 
+
+
+
+
+
+</body>
 </html>
