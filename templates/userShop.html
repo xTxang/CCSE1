@@ -17,7 +17,7 @@
       rel="stylesheet"
     />
   </head>
-  <body>
+  <body id = 'shopBody'>
     <div class = 'headerbar'>
       <a class="leftButton" href = './shop.html'>Home</a>
       <a class="leftButton" href = './login.html'>Exit</a>
@@ -27,36 +27,34 @@
     </div>
 
     <h1>Welcome back, {{unencryptedName}}</h1>
-    <div class="container">
-      <!-- Iterates through products in database, creates entry on site for each -->
+    <div class="product-container">
       {% for product in products %}
-      <!-- TODO change the userid to sessions? -->
-      <form action="/shop/{{ userId }}" method="POST">
-        <div class="item">
-            <p>Product ID: {{ product.productID }}</p>
-            <img src="{{ product.productImg }}" alt="Product Image">
-            <h3>{{ product.productName }}</h3>
-            <p>Price: ${{ product.productCost }}</p>
-            <label for="quant">Quantity:</label>
-            <input type="number" id="quant" name="quant" required min="1" value="1">
+      <div class="product-box">
+        <form action="/shop/{{ userId }}" method="POST">
+        <!-- <img src="images\784px-Card_spade.svg-1473127101.jpg" alt="Product Name" class="product-image"> -->
+        <h3 class="title">{{ product.productName }}</h3>
+        <!-- TODO add product description if time  -->
+        <p class="product-price">£{{ product.productCost }}</p>
+        <input class = "productInput" type="number" id="quant" name="quant" required min="1" value="1">
             <!-- Hidden field for productId -->
-            <input type="hidden" name="productId" value="{{ product.productID }}">
-            <button type="submit">Add to Cart</button>
-        </div>
-      </form>
-      {% endfor %} 
+        <input type="hidden" name="productId" value="{{ product.productID }}">
+
+        <button type="submit">Add to Cart</button>
+    
+        </form>
+     
+      </div>
+      {% endfor %}
     </div>
 
-    <script>
-        // Mock cart for demonstration
-        let cart = [];
 
-        function addToCart(itemName) {
-            cart.push(itemName);
-            alert(`${itemName} added to cart!`);
-            console.log('Cart:', cart);
-        }
 
-    </script>
+
+
+
+
 </body>
 </html>
+
+
+

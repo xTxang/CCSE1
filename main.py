@@ -230,7 +230,6 @@ def signup():
 @app.route('/shop/<userId>', methods = ['GET','POST'])
 def userShop(userId):
     if flask.session['role'] != int(userId):#if user attempts to access an unauthorised path
-        print('cum')
         return redirect('/index')#TODO  keyerror
 
     product_list = db.returnProducts()
@@ -252,13 +251,32 @@ def userShop(userId):
         # requestedproductID = request.form.get('')
         # db.addtoBasket()
 
-
-
-
-
-
     return render_template('userShop.html', products=product_list, userId=userId,unencryptedName=unencryptedName[0])
 
+@app.route('/checkout/<userId>', methods=['POST'])#TODO the checkout logic
+def checkout(userId):
+    action = request.form.get('action')
+    basketItems = db.getBasket(userId)
+    if action == 'submit':
+        cardNumber = request.form.get('cardNum')#TODO card info?
+        expiryDate = request.form.get('expiryDate')
+        CVV = request.form.get('CVV')
+
+        
+        db.addOrder(basketItems)
+        #TODO decrease item amount
+
+        return render_template('checkout.html', paid=True)
+
+
+        
+
+    return render_template('checkout.html', basketItems=basketItems,userId=userId,paid = False)
+
+
+@app.route('/userDash/<userId>',methods = ['POST'])
+def userDash():
+    """Allows for alteration of user details and viewing of invoices"""
 
 @app.route('/logout')
 def logout():
@@ -270,10 +288,10 @@ def basket(userId):#TODO add to the html item is unavailable
     """Redirects to the basket of a specific user when the button is pressed on their webpage"""
     basketItems = db.getBasket(userId)
 
-    for basketItem in basketItems:
-        print(basketItem.itemName)
+    totalPrice = sum(item.basketPrice for item in basketItems)
+
     
-    return render_template('basket.html', basketItems=basketItems, userId=userId)
+    return render_template('basket.html', basketItems=basketItems, userId=userId, totalPrice=totalPrice)
 
     
 

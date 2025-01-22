@@ -14,23 +14,52 @@
         </div>
     </header>
 
+ 
     <main>
         {% if basketItems %}
-          {% for basketItem in basketItems %}
-              <div class="item">
-                <p>Name: {{basketItem.itemName}}<p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Item Name</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for basketItem in basketItems %}
+                <tr>
+                    <td>{{ basketItem.itemName }}</td>
+                    <td>{{ basketItem.basketQuant }}</td>
+                    <td>{{ basketItem.basketPrice }}</td>
+                    <td class="action-buttons">
+                        <form action="/basket/{{ userId }}" method="POST">
+                            <button type="submit">Remove Item</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
 
-                <p>Quantity: {{basketItem.basketQuant}}<p>
+                <tr>
+                    <td colspan="2" style="text-align: right; font-weight: bold;">Total Price:</td>
+                    <td colspan="2" style="font-weight: bold;">£{{ totalPrice }}</td>
+                </tr>
+            </tbody>
+        </table>
 
-                <p>price: {{basketItem.basketPrice}}<p>
-
-              </div>
-          {% endfor %}
+        
+        <div class="checkout-button">
+            <form method="POST" action="/checkout/{{ userId }}">
+                <button type="submit">Proceed to Checkout</button>
+            </form>
+        </div>
+        {% else %}
+        <div class="empty-basket">
+            <p>Your basket is empty. <a href="/shop/{{ userId }}">Start shopping now!</a></p>
+        </div>
         {% endif %}
-      {% if not basketItems %}
-          <p>Your basket is empty. <a href="/shop/{{ userId }}">Start shopping now!</a></p>
-      {% endif %}
-  
+
+
     </main>
 </body>
 </html>

@@ -4,6 +4,7 @@ from sqlalchemy.orm import declarative_base, sessionmaker, relationship, Mapped
 import os
 from hashlib import pbkdf2_hmac#Used for hashing
 from aesAlgorithm import AEScipher
+from datetime import datetime#for dates of orders
 
 encryption = AEScipher()#Instatiates an AES encryption object
 
@@ -222,8 +223,6 @@ class Database():
         print(encryptedEmail)
         with self._sessionOpen() as session:
             matchingUser = session.query(user).filter_by(userLogin = encryptedEmail).first()
-        print(matchingUser)
-        print('===============')
         return matchingUser
         
             
@@ -340,8 +339,51 @@ class Database():
         city =  encryption.decrypt(foundUser.userCity)
         postcode =  encryption.decrypt(foundUser.userPostcode)
         return name, login, houseNum, street, city, postcode
+    
 
-        
+    def addOrder(self,basketItems):
+        """Adds the items in the basket to the order table after checkout"""
+        try:
+            with self._sessionOpen() as session:#Finds highest order ID
+                highestOID = session.query(func.max(order.orderID)).scalar()#Used to find the highest user id in the table, increments by 1 for next ID
+            self.setorderId = highestOID + 1
+        except TypeError:#No orderID yet
+            self.setorderId = 1
+
+
+        with self._sessionOpen() as session:
+            # Iterate through basket items
+            for item in basketItems:
+                try:#Finds highest order ID
+                    highestOID = session.query(func.max(order.orderID)).scalar()#Used to find the highest user id in the table, increments by 1 for next ID
+                    self.setorderId = highestOID + 1
+                except TypeError:#No orderID yet
+                    self.setorderId = 1
+
+
+
+
+                # Add item to the orders table
+                new_order = order(
+                    orderID = self.setorderId,
+                    userID = item.userID,
+                    orderDate = datetime.now().strftime("%Y-%m-%d-%H:%M:%S.%f"),
+                    orderQuant = item.basketQuant,
+                    orderPrice = item.basketPrice 
+                )
+                session.add(new_order)
+
+                new_product_order = productOrder(
+                    orderID = self.setorderId,
+                    productID = item.productID
+                )#adds to product order table
+                
+                session.add(new_product_order)
+                # Remove item from the basket table
+                session.delete(item)
+
+            # Commit changes to the database
+            session.commit()
 
 
 

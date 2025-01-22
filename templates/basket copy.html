@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Basket</title>
+    <link rel="stylesheet" href="/static/CSS/main.css">
+</head>
+<body>
+    <header>
+        <div class="headerbar">
+            <a class="leftButton" href="/shop/{{ userId }}">Continue Shopping</a>
+            <a class="leftButton" href="/logout">Logout</a>
+        </div>
+    </header>
+
+    <main>
+        {% if basketItems %}
+          {% for basketItem in basketItems %}
+              <div class="item">
+                <p>Name: {{basketItem.itemName}}<p>
+
+                <p>Quantity: {{basketItem.basketQuant}}<p>
+
+                <p>price: {{basketItem.basketPrice}}<p>
+
+              </div>
+          {% endfor %}
+        {% endif %}
+      {% if not basketItems %}
+          <p>Your basket is empty. <a href="/shop/{{ userId }}">Start shopping now!</a></p>
+      {% endif %}
+  
+    </main>
+</body>
+</html>

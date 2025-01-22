@@ -378,3 +378,86 @@ aside {
 .headerButton button:hover {
   background-color: #0056b3; /* Darker blue on hover */
 }
+
+
+
+
+/* Basket Table Styles */
+table {
+  width: 100%;
+  margin: 20px auto;
+  border-collapse: collapse;
+  background-color: #1C1C1C; /* Match the site's dark theme */
+  color: rgba(243, 244, 246, 1);
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: center;
+}
+
+th {
+  background-color: #8B0000; /* Dark red for headers */
+  color: #fff;
+  font-weight: bold;
+}
+
+tr:nth-child(even) {
+  background-color: #333; /* Slightly lighter for alternate rows */
+}
+
+tr:hover {
+  background-color: #444; /* Highlight row on hover */
+}
+
+/* Action Button Styling */
+.action-buttons button {
+  padding: 5px 10px;
+  background-color: #e74c3c; /* Remove button color */
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.action-buttons button:hover {
+  background-color: #c0392b; /* Darker hover color */
+}
+
+/* Checkout Button Styling */
+.checkout-button {
+  text-align: right;
+  margin-top: 20px;
+}
+
+.checkout-button button {
+  padding: 10px 20px;
+  background-color: #2ecc71; /* Green for checkout */
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.checkout-button button:hover {
+  background-color: #27ae60; /* Darker green on hover */
+}
+
+/* Empty Basket Message */
+.empty-basket {
+  text-align: center;
+  margin-top: 50px;
+  font-size: 1.2rem;
+}
+
+.empty-basket a {
+  color: #3498db; /* Light blue link */
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.empty-basket a:hover {
+  text-decoration: underline;
+}
