@@ -24,13 +24,13 @@
       <a class="basketButton" href="/basket/{{ userId }}">Basket</a>
       <span class="basket-count">{{ basket_count }}</span>
       <a class="leftButton" href="/logout">Logout</a>
-
     </div>
 
-    <h1>Welcome back, Arabelle</h1>
+    <h1>Welcome back, {{unencryptedName}}</h1>
     <div class="container">
       <!-- Iterates through products in database, creates entry on site for each -->
       {% for product in products %}
+      <!-- TODO change the userid to sessions? -->
       <form action="/shop/{{ userId }}" method="POST">
         <div class="item">
             <p>Product ID: {{ product.productID }}</p>

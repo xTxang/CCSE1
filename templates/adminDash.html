@@ -7,14 +7,29 @@
     <link rel="stylesheet" href="/static/CSS/main.css">
 </head>
 <body>
-    {% if not action %}
+    <div class = 'headerbar'>
+        <a class="leftButton" href = './shop.html'>Home</a>
+        <a class="leftButton" href="/logout">Logout</a>
+      </div>
+    
+    <div class = 'headerButton'>
+    <form method = 'POST'>
+        <button type="submit" name="action" value="view" id="view-button">View and edit products</button>
+        <button type="submit" name="action" value="add" id="add-button">Add products</button>
+    </form>
+
+    </div>
+
+
+    
+    <!-- {% if not action %}
     <form method = 'POST'>
         <div id="button-container">
             <button type="submit" name="action" value="view" id="view-button">View and edit products</button>
             <button type="submit" name="action" value="add" id="add-button">Add products</button>
         </div>
     </form>
-    {% endif %}
+    {% endif %} -->
     {% if action == "view" %}
         {% for product in products %}
             <p>Product ID: {{ product.productID }}</p>

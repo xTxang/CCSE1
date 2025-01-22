@@ -3,6 +3,9 @@ import flask
 from database import Database #Imports session and products from database.py to populate the e-commerce
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy 
+import os
+
+
 
 #TODO add user roles
 #TODO add admin roles(use authorisation code to add admin?)
@@ -11,33 +14,27 @@ from flask_sqlalchemy import SQLAlchemy
 db = Database()# intialises the database object
 
 def numberCheck(word):
+    """Checks if password contains a digit """
     return any(i.isdigit() for i in word)
 
 app = Flask(__name__)
-
-
-
-@app.route('/')
-# @app.route('/index')
-# def index():
-#     return render_template('dashboad.html')
-
-def home():
-    return render_template('dashboad.html')
-
-from flask import Flask, request, render_template, redirect, url_for
-
-app = Flask(__name__)
+key_bytes = os.urandom(16)#creates bytes for key
+app.secret_key = key_bytes.hex()#key for session
+print(app.secret_key)
 
 @app.route('/')
-@app.route('/index')
+@app.route('/index', methods=['POST','GET'])
 def index():
-    
-    # session = initDb
-    # print(session)
-    # print(products)
-    # products = session.query(products).all()
-    # Render the 'index.html' template, passing the products data
+    if request.method == 'POST':
+        print('post')
+
+        action = request.form.get('action')
+        if action == 'submit':
+            print('button is pressed')
+            product_list = db.returnProducts()
+
+            return render_template('shop.html',products=product_list,alert=True)
+
     product_list = db.returnProducts()
     return render_template('shop.html', products=product_list)
    # return render_template('shop.html')  # Fixed "dashboad" typo
@@ -80,35 +77,70 @@ def login():
         new_username = request.form.get('username')
         new_password = request.form.get('password')
 
-        if action == 'login':  
-            returnedUser = db.search_user(new_username,new_password)
+        if action == 'login':#To see if user is correct, password is hashed and compared
+            
+            #First, username is encrypted and compared against the database
+            print(new_username)
+            returnedUser = db.finduserfromEmail(new_username)
+            print(returnedUser.userName)
+            print(returnedUser)
+            # hashedPassword = db.passwordHash(new_password,returnedUser.salt)#Hashes password with salt
+
             if returnedUser == None:
                 return render_template('login.html', failed_login=True)
-            else:
-                print('worked')
+            elif returnedUser.userPass == db.passwordHash(new_password,returnedUser.salt):#if password is correct
                 userId = returnedUser.userID
-                print(userId)
-                return redirect(f'/shop/{userId}')
+                print(flask.session)
+
+                flask.session['role'] = userId # Creates a flask session with the role, stops users accessing unauthorised pages
+                #Checks if user is an admin or customer
+                if returnedUser.userType == 1:#Customer
+                    return redirect(f'/shop/{userId}')
+
+                
+                elif returnedUser.userType == 2:#Admin
+                    return redirect('/admin')
+    
+            elif db.passwordHash(new_password,returnedUser.salt) != returnedUser.userPass:#If password is incorrect
+                return render_template('login.html', failed_login=True)
+                #TODO add amount of times to stop brute force attacks
+
+
+
+            # else:
+            #     print('worked')
+            #     userId = returnedUser.userID
+            #     print(userId)
+            #     #TODO
+            #     #fetch from db
+            #     # flask.session['role'] == userType
+            #     #if 1, go to user
+            #     #if 2 go to admin
+            #     return redirect(f'/shop/{userId}')
 
             
             
 
-            #TODO Check if login is in database, then if good, send back to shop page
-            return render_template('shop.html')
-        elif action == 'signup':
+        #     return render_template('shop.html')
+        # elif action == 'signup':
 
-            if len(new_password) < 8 or len(new_username) < 8 or numberCheck(new_password) == False:
-                return render_template("login.html", failed_signup=True)
-            else:
-                db.store_username(new_username, new_password)
-                return redirect('/signup')
+        #     if len(new_password) < 8 or len(new_username) < 8 or numberCheck(new_password) == False:
+        #         return render_template("login.html", failed_signup=True)
+        #     else:
+        #         db.store_username(new_username, new_password)
+        #         return redirect('/signup')
     return render_template('login.html')
 
 @app.route('/admin', methods=['GET','POST'])#TODO remove get when fully implemented
 def adminDash():
     """Basic route for admin functionality, facilitating adding products and editing products"""
-    print('test')
+    try:
+        adminCheck = db.getuserfromID(flask.session['role'])
+    except KeyError:
+        return redirect('/index')
 
+    if adminCheck.userType !=  2:#checks if user is an admin
+        return redirect('/index')
     if request.method == "POST":
         action = request.form.get("action")  # Get the button value
         print(f"Action received: {action}")
@@ -137,11 +169,15 @@ def adminDash():
         
 
         elif action == 'submitProduct':
-            print('is this working??')
             productName = request.form.get('prodName')
             productCost = request.form.get('prodCost')
             productImg = request.form.get('productImg')
             productQuant = request.form.get('productQuant')
+
+            # try:#This increments product ID by 1 for the new product :) TODO, must be a better way to do this(leads to gaps when items are removed?)
+            #     x = x + 1
+            # except NameError:
+            #     x = 1
 
             
             newProductID = db.createProduct(productName,productCost,productImg,productQuant)
@@ -151,11 +187,6 @@ def adminDash():
 
 
                 #TODO check if there is an item with the same name?
-
-
-
-
-        
 
     return render_template('adminDash.html', action = None)
 
@@ -167,20 +198,24 @@ def adminDash():
 def signup():
     action = request.form.get('action')  # Get the value of the button
     if action == 'submit':
-        print('hello')
+        inputtedUsername = request.form.get('username')
+        inputtedPassword = request.form.get('password')
         name = request.form.get('name')
         houseNum = request.form.get('house')
         street = request.form.get('street')
         city = request.form.get('city')
         postcode = request.form.get('postcode')
-        print(name)
-        print(houseNum)
-        print(street)
-        print(city)
-        print(postcode)
 
-        db.createUser(name, houseNum, street, city, postcode)
-        return redirect('/shop/<userId>')
+
+        if len(inputtedPassword) < 8 or len(inputtedUsername) < 8 or numberCheck(inputtedPassword) == False:
+            return render_template('signup.html', failed_signup=True)      
+        else:
+
+            userId = db.createUser(inputtedUsername,inputtedPassword,name, houseNum, street, city, postcode)
+
+            flask.session['role'] = userId
+            return redirect(f'/shop/<userId>')
+
     return render_template("signup.html")
 
 
@@ -194,17 +229,23 @@ def signup():
 
 @app.route('/shop/<userId>', methods = ['GET','POST'])
 def userShop(userId):
-    print(userId)
+    if flask.session['role'] != int(userId):#if user attempts to access an unauthorised path
+        print('cum')
+        return redirect('/index')#TODO  keyerror
+
     product_list = db.returnProducts()
+    unencryptedName  = db.decryptUser(userId)
+
 
     if request.method == 'POST':
         print('hello')
         productID = request.form.get('productId')
         quantity = int(request.form.get('quant'))
-        if quantity > 2:
+        if quantity > 2:#TODO this makes no fucking sense
             quantity = quantity+1#because the counter starts at 1, it otherwise shows 1 below
-
         db.addtoBasket(userId, productID, quantity)
+
+
 
         print(productID)
         print(quantity)
@@ -216,7 +257,7 @@ def userShop(userId):
 
 
 
-    return render_template('userShop.html', products=product_list, userId=userId)
+    return render_template('userShop.html', products=product_list, userId=userId,unencryptedName=unencryptedName[0])
 
 
 @app.route('/logout')

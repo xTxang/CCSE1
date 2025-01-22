@@ -282,6 +282,27 @@
         </div>
     </div>
 
+
+
+    <!-- WORKING ITERATING product -->
+    <div class="container">
+      <!-- Iterates through products in database, creates entrty on site for each -->
+      {% for product in products %}
+      <div class="item">
+          <!-- Dynamically set the image source and product details -->
+          <img src="{{ product.productImg }}" alt="Product Image">
+          <h3>{{ product.productName }}</h3>
+          <p>Price: ${{ product.productCost }}</p>
+          <label for="quant">Quantity:</label>
+          <input type="number" id="quant" name="quant" required>
+          <button class="add-btn" onclick="addToCart('{{ product.productName }}')">Add to Cart</button>
+        </div>
+       {% endfor %} 
+    </div>
+
+
+
+
     <script>
         // Mock cart for demonstration
         let cart = [];

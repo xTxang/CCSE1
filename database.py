@@ -1,8 +1,15 @@
 from cryptography.fernet import Fernet
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey, Enum, update, Float, PrimaryKeyConstraint, Boolean
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey, Enum, update, Float, PrimaryKeyConstraint, Boolean, func
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship, Mapped
+import os
+from hashlib import pbkdf2_hmac#Used for hashing
+from aesAlgorithm import AEScipher
+
+encryption = AEScipher()#Instatiates an AES encryption object
+
 
 Base = declarative_base()
+
 
 class products(Base):
     """intialise the products table, containing all products on the site"""
@@ -28,19 +35,36 @@ class basket(Base):
 
 
 
+# class user(Base):
+#     """intialise the user table, containing both customers and admins"""
+#     __tablename__ = "user"
+
+#      # columns in the table
+#     userID = Column(String, primary_key=True)#TODO string?
+#     userName = Column(String, nullable=False )
+#     userLogin = Column(String(200), nullable=False)
+#     userPass = Column(String(200), nullable=False)
+#     userHouse = Column(Integer, nullable=False)
+#     userStreet = Column(String(200), nullable=False)
+#     userCity = Column(String(200), nullable=False)
+#     userPostcode = Column(String(200), nullable=False)
+#     salt = Column(String, nullable = False)
+#     userType = Column(Integer, nullable = False)
+
 class user(Base):
     """intialise the user table, containing both customers and admins"""
     __tablename__ = "user"
 
-     # columns in the table
-    userID = Column(Integer, primary_key=True)
+        # columns in the table
+    userID = Column(Integer, primary_key=True)#TODO string?
     userName = Column(String, nullable=False )
-    userLogin = Column(String(200), nullable=False)
-    userPass = Column(String(200), nullable=False)
-    userHouse = Column(Integer, nullable=False)
-    userStreet = Column(String(200), nullable=False)
-    userCity = Column(String(200), nullable=False)
-    userPostcode = Column(String(200), nullable=False)
+    userLogin = Column(String, nullable=False)
+    userPass = Column(String, nullable=False)
+    userHouse = Column(String, nullable=False)
+    userStreet = Column(String, nullable=False)
+    userCity = Column(String, nullable=False)
+    userPostcode = Column(String, nullable=False)
+    salt = Column(String, nullable = False)
     userType = Column(Integer, nullable = False)
 
 
@@ -51,7 +75,7 @@ class order(Base):
     """Table of purchased orders by users"""
     __tablename__ = "order"
     orderID = Column(Integer, primary_key=True)
-    userID = Column(Integer, ForeignKey("user.userID"), nullable=True)
+    userID = Column(String, ForeignKey("user.userID"), nullable=True)
     orderDate = Column(Integer, nullable=True)
     orderQuant = Column(Integer, nullable=True)
     orderPrice = Column(Integer, nullable=True)
@@ -60,6 +84,7 @@ class order(Base):
     # links products to users
 
 class productOrder(Base):
+    """Table to link products and order to ensure databasse normalisation"""
     __tablename__ = "productOrder"
     orderID = Column(Integer, ForeignKey("order.orderID"), nullable=True)
     productID = Column(Integer, ForeignKey("products.productID"), nullable=True)
@@ -80,45 +105,98 @@ class Database():
         Base.metadata.create_all(self.engine)
         self._sessionOpen = sessionmaker(bind=self.engine)
         # session = Session()#Creates a session instance
-
-        self.new_username = ""
-        self.new_password = ""
         # session.commit()#
 
         # # Query all products from the database
         # session.close()
+        # salt = os.urandom(16)
 
-    def store_username(self, username: str, password: str):
-        self.new_password = password
-        self.new_username = username
-        return f"works: {self.new_password}, {self.new_username}"
+        # new_user = user(
+        #     userID = 1,
+        #     userName= self.encryptData('AdminUser'),
+        #     userLogin=self.encryptData('Admin'), 
+        #     userPass=self.passwordHash('Admin1', salt),#already hashed, doesn't need to be encrypted
+        #     userHouse=self.encryptData('test'),
+        #     userStreet=self.encryptData('test'),
+        #     userCity=self.encryptData('test'),
+        #     userPostcode=self.encryptData('test'),
+        #     salt = salt,
+        #     userType = 2
+        # )
+        # with self._sessionOpen.begin() as session:
+        #     session.add(new_user)
 
 
-    def createUser(self, name, house, street,city,postcode):
+
+        # adminImplement = user(
+        #     userID = 1,
+        #     userName = 'AdminUser',
+        #     userLogin = 'Admin',
+        #     userPass = 'Admin1',
+        #     userHouse = 'test',
+        #     userStreet = 'test',
+        #     userCity = 'test',
+        #     userPostcode = 'test',
+        #     salt = 'test',
+        #     userType = 2
+        # )
+        # with self._sessionOpen.begin() as session:
+
+        #     session.add(new_user)
+
+
+    def createUser(self, username,password,name, house, street,city,postcode):
+        """Creates a user and adds them to the database and hashes password"""
         #add admin and hashing etc
 
+        salt = os.urandom(16)
+        hashedPassword = self.passwordHash(password, salt)
+
+        # try:
+        #     self.setuserId = self.setuserId + 1
+        # except AttributeError:
+        #     self.setuserId = 1
+        with self._sessionOpen() as session:
+            highestUID = session.query(func.max(user.userID)).scalar()#Used to find the highest user id in the table, increments by 1 for next ID
+        print(highestUID)
+        self.setuserId = highestUID + 1
+
+
+
+
         new_user = user(
-            userID = 15,
-            userName=name,
-            userLogin=self.new_username,
-            userPass=self.new_password,
-            userHouse=house,
-            userStreet=street,
-            userCity=city,
-            userPostcode=postcode,
+            userID = self.setuserId,
+            userName= self.encryptData(name),
+            userLogin=self.encryptData(username), 
+            userPass=hashedPassword,#already hashed, doesn't need to be encrypted
+            userHouse=self.encryptData(house),
+            userStreet=self.encryptData(street),
+            userCity=self.encryptData(city),
+            userPostcode=self.encryptData(postcode),
+            salt = salt,
             userType = 1
         )
         with self._sessionOpen.begin() as session:
             session.add(new_user)
 
-    def createProduct(self,productName,productCost,productImg,productQuant):
-        try:#This increments product ID by 1 for the new product :) TODO, must be a better way to do this(leads to gaps when items are removed?)
-            x = x + 1
-        except NameError:
-            x = 1
+        return self.setuserId#returns the ID of user created
 
+
+     
+    def passwordHash(self, password: str, salt: bytes) -> bytes:
+        """Hashes entered user password with a salt, returns to be stored in database"""
+        return pbkdf2_hmac("sha512", bytes(password, "utf-8"), salt, 500000)#Hashes password with sha512 algorithm
+
+    def createProduct(self,productName,productCost,productImg,productQuant):
+
+        try:    
+            self.x = self.x + 1 
+        except AttributeError:
+            self.x = 1
+
+        print(self.x)
         newProduct = products(
-            productID = x,
+            productID = self.x,
             productName = productName,
             productCost = productCost,
             productImg = productImg,
@@ -127,12 +205,7 @@ class Database():
 
         with self._sessionOpen.begin() as session:
             session.add(newProduct)
-
-        
-
-        
-
-        return x
+        return self.x
 
 
     def search_user(self, enteredUser,enteredPass):
@@ -143,12 +216,34 @@ class Database():
             else:
                 return None
             
+    def finduserfromEmail(self,email):
+        """Login functionality, retrieves email and encrypts it to compare against user table"""
+        encryptedEmail = self.encryptData(email)
+        print(encryptedEmail)
+        with self._sessionOpen() as session:
+            matchingUser = session.query(user).filter_by(userLogin = encryptedEmail).first()
+        print(matchingUser)
+        print('===============')
+        return matchingUser
+        
+            
+    def getproductfromID(self, ID):
+        """Used to retrieve user data from user id, in order for user specific pages"""
+        with self._sessionOpen() as session:
+            self.product_list = session.query(products).filter_by(userID=ID).first()     
+        return self.product_list
+    
     def getuserfromID(self, ID):
         """Used to retrieve user data from user id, in order for user specific pages"""
+        with self._sessionOpen() as session:
+            self.user = session.query(user).filter_by(userID=ID).first()     
+        return self.user
 
-    def returnProducts(self):   
+    def returnProducts(self): 
+        """Returns all products in the database"""  
         with self._sessionOpen() as session:
             self.product_list = session.query(products).all()
+
         return self.product_list
     
 
@@ -217,6 +312,36 @@ class Database():
             product.productQuant = newQuant
             print(product.productQuant)
             session.commit()
+
+
+
+    def encryptData(self, data):
+        """used to encrypt data before it is added to the database"""
+        encryptedData = encryption.encrypt(data)
+        return encryptedData
+
+    def decryptData(self, datatoDecrypt):
+        #TODO for fields in object decrpyt maybe?
+        """This function iterates through entries and decrypts them for use"""
+        decryptedData = encryption.decryt(datatoDecrypt)
+        
+        return decryptedData   
+    
+
+    def decryptUser(self, userId):
+        """Finds a user via their ID, decrypts the relevant information and sends it back"""
+        with self._sessionOpen() as session:#Finds product via id, deletes and commits changes
+            foundUser = session.query(user).filter_by(userID=userId).first()
+        print(foundUser.userName)
+        name = encryption.decrypt(foundUser.userName)
+        login = encryption.decrypt(foundUser.userLogin)
+        houseNum = encryption.decrypt(foundUser.userHouse) 
+        street =  encryption.decrypt(foundUser.userStreet)
+        city =  encryption.decrypt(foundUser.userCity)
+        postcode =  encryption.decrypt(foundUser.userPostcode)
+        return name, login, houseNum, street, city, postcode
+
+        
 
 
 
