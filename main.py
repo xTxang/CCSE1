@@ -274,9 +274,64 @@ def checkout(userId):
     return render_template('checkout.html', basketItems=basketItems,userId=userId,paid = False)
 
 
-@app.route('/userDash/<userId>',methods = ['POST'])
-def userDash():
+@app.route('/userDash/<userId>',methods = ['GET','POST'])
+def userDash(userId):#TODO session auth
     """Allows for alteration of user details and viewing of invoices"""
+    action = request.form.get('action')
+    if action == 'invoice':
+        return render_template('userDash.html', userId = userId,invoice = True)
+
+    
+    elif action == 'infoChange':
+        return render_template('userDash.html', userId = userId, info = True)
+
+    elif action == 'address':#Change address
+
+        return render_template('userDash.html', userId = userId, addressChange = True)
+
+    elif action == 'password':#Change password
+        return render_template('userDash.html', userId = userId, passwordChange = True)
+    
+    elif action == 'email':#Change email
+        return render_template('userDash.html', userId = userId, emailChange = True)
+    
+
+    elif action == 'submitAddress':
+        houseNum = request.form.get('house')
+        street = request.form.get('street')
+        city = request.form.get('city')
+        postcode = request.form.get('postcode')
+        print('Checkpoint 1')
+
+        print(postcode)
+        print('-----------')
+        db.changeAddress(userId,houseNum,street,city,postcode)
+
+    elif action == 'submitEmail':
+        email = request.form.get('email')
+        db.changeEmail(userId,email)
+
+    elif action == 'submitPassword':
+        returnedUser = db.getuserfromID(userId)#Gets user
+        oldPassword = request.form.get('oldPassword')
+        newPassword = request.form.get('newPassword')
+        if db.passwordHash(oldPassword,returnedUser.salt) != returnedUser.userPass:
+            print('bad')
+            return render_template('userDash.html',failedLogin = True)
+        elif numberCheck(newPassword) == False or len(newPassword) < 8:
+            print('bad')
+            return render_template('userDash.html',failedLogin = True)
+        else:
+            print('good')
+            db.changePassword(userId, newPassword)
+            return render_template('userDash.html',successLogin = True)
+
+            
+
+
+
+
+    return render_template('userDash.html', userId = userId)
 
 @app.route('/logout')
 def logout():
@@ -288,7 +343,13 @@ def basket(userId):#TODO add to the html item is unavailable
     """Redirects to the basket of a specific user when the button is pressed on their webpage"""
     basketItems = db.getBasket(userId)
 
+
     totalPrice = sum(item.basketPrice for item in basketItems)
+
+    for item in basketItems:#Checks if there is enough quantity in stock
+        product = db.getproductfromID(item.productID)
+        if product.productQuant < item.orderQuant:
+            return render_template('basket.html')#TODO fix, make the product page have a limit on quantity 
 
     
     return render_template('basket.html', basketItems=basketItems, userId=userId, totalPrice=totalPrice)

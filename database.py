@@ -343,12 +343,6 @@ class Database():
 
     def addOrder(self,basketItems):
         """Adds the items in the basket to the order table after checkout"""
-        try:
-            with self._sessionOpen() as session:#Finds highest order ID
-                highestOID = session.query(func.max(order.orderID)).scalar()#Used to find the highest user id in the table, increments by 1 for next ID
-            self.setorderId = highestOID + 1
-        except TypeError:#No orderID yet
-            self.setorderId = 1
 
 
         with self._sessionOpen() as session:
@@ -380,10 +374,61 @@ class Database():
                 
                 session.add(new_product_order)
                 # Remove item from the basket table
+
+                # Update the product quantity in the product table
+                product = session.query(product).filter_by(productID=item.productID).one_or_none()
+                if product:
+                    if product.productQuant >= item.basketQuant:
+                        product.productQuant -= item.basketQuant
+                else:#Should already check in basket
+                    raise ValueError(f"Not enough stock for productID {item.productID}. Current stock: {product.productQuant}")#TODO
                 session.delete(item)
 
             # Commit changes to the database
             session.commit()
+    
+
+    def changeAddress(self,userId,houseNum,street,city,postcode):
+        """Used to change a users address"""
+
+        # changeUser = self.getuserfromID(userId)
+        with self._sessionOpen() as session:
+            changeUser = session.query(user).filter_by(userID=userId).first()#This needs to be done without the getuserfromID methods, otherwise it detatches the object
+            changeUser.userHouse = self.encryptData(houseNum)
+            changeUser.userStreet = self.encryptData(street)
+            changeUser.userCity = self.encryptData(city)
+            changeUser.userPostcode = self.encryptData(postcode)
+            print(changeUser.userPostcode)
+ 
+            session.commit()
+    
+    def changeEmail(self,userId,email):
+        """Used to change a users email"""
+        with self._sessionOpen() as session:
+            changeUser = session.query(user).filter_by(userID=userId).first()
+            changeUser.userLogin = self.encryptData(email)
+            session.commit()
+
+
+    def changePassword(self,userId,newPassword):
+        """Used to change a users password"""
+        print('inFunc')
+        with self._sessionOpen() as session:
+            changeUser = session.query(user).filter_by(userID=userId).first()
+
+            hashedPassword = self.passwordHash(newPassword, changeUser.salt)
+
+            changeUser.userPass = hashedPassword
+
+
+            session.commit()
+
+
+
+
+
+
+
 
 
 
