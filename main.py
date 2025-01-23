@@ -279,7 +279,13 @@ def userDash(userId):#TODO session auth
     """Allows for alteration of user details and viewing of invoices"""
     action = request.form.get('action')
     if action == 'invoice':
-        return render_template('userDash.html', userId = userId,invoice = True)
+
+        returnedOrder = db.getOrder(userId)
+        print(returnedOrder)
+        for order in returnedOrder:
+            print('==========================')
+            print(f"Order ID: {order[0]}, Date: {order[1]}, Price: {order[2]}, Quantity: {order[3]}, Product: {order[4]}")
+        return render_template('userdash.html', userId = userId, returnedOrder=returnedOrder, invoice = True)
 
     
     elif action == 'infoChange':
@@ -302,9 +308,6 @@ def userDash(userId):#TODO session auth
         city = request.form.get('city')
         postcode = request.form.get('postcode')
         print('Checkpoint 1')
-
-        print(postcode)
-        print('-----------')
         db.changeAddress(userId,houseNum,street,city,postcode)
 
     elif action == 'submitEmail':
@@ -316,18 +319,13 @@ def userDash(userId):#TODO session auth
         oldPassword = request.form.get('oldPassword')
         newPassword = request.form.get('newPassword')
         if db.passwordHash(oldPassword,returnedUser.salt) != returnedUser.userPass:
-            print('bad')
             return render_template('userDash.html',failedLogin = True)
         elif numberCheck(newPassword) == False or len(newPassword) < 8:
-            print('bad')
             return render_template('userDash.html',failedLogin = True)
         else:
-            print('good')
             db.changePassword(userId, newPassword)
             return render_template('userDash.html',successLogin = True)
-
-            
-
+        
 
 
 

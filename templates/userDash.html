@@ -35,16 +35,40 @@
     <div class="form-container">
         <p class="title">User Dashboard options</p>
         <form action="/userDash/{{ userId }}" method="POST">
-
- 
             <button class = "sign" type = "submit" name="action" value = "invoice">View invoices</button>
             <br>
             <button class = "sign" type = "submit" name="action" value = "infoChange">Change personal information</button>
-
         </form>
     </div>
     {% endif %}
 
+    {% if invoice %}
+    <div class="form-container">
+      <p class="title">Your Orders</p>
+      <table>
+          <thead>
+              <tr>
+                  <th>Order ID</th>
+                  <th>Order Date</th>
+                  <th>Product Name</th>
+                  <th>Quantity</th>
+                  <th>Price</th>
+              </tr>
+          </thead>
+          <tbody>
+              {% for order in returnedOrder %}
+              <tr>
+                  <td>{{ order[0] }}</td> <!-- Order ID -->
+                  <td>{{ order[1] }}</td> <!-- Order Date -->
+                  <td>{{ order[4] }}</td> <!-- Product Name -->
+                  <td>{{ order[3] }}</td> <!-- Quantity -->
+                  <td>{{ order[2] }}</td> <!-- Price -->
+              </tr>
+              {% endfor %}
+          </tbody>
+      </table>
+  </div>
+    {% endif %}
     
 
 
@@ -95,7 +119,7 @@
 
     {% if passwordChange %}
     <div class="form-container">
-        <p class="title">Sign Up</p>
+        <p class="title">Change Password</p>
         <form action="/userDash/{{ userId }}" method="post">
 
           <div class="input-group">
@@ -126,7 +150,6 @@
           <button class="sign" type="submit" name="action" value="submitEmail">Submit</button>
         </form>
       </div>
-
 
     {% endif %}
 

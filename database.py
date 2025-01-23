@@ -424,6 +424,31 @@ class Database():
             session.commit()
 
 
+    def getOrder(self, userId):
+        """Retrieves orders for the invoice screen"""
+        with self._sessionOpen() as session:
+            returnedOrders = session.query(order).filter_by(userID=userId).all()
+
+
+        with self._sessionOpen() as session:
+            print('running')
+        # Query to join the tables and retrieve the required information
+            returnedOrders = (
+                session.query(
+                    order.orderID,
+                    order.orderDate,
+                    order.orderPrice,
+                    order.orderQuant,
+                    products.productName,
+                )
+                .join(productOrder, order.orderID == productOrder.orderID)  # Join with productOrder
+                .join(products, productOrder.productID == products.productID)  # Join with products
+                .filter(order.userID == userId)  # Filter by userID
+                .all()
+            )
+
+        return returnedOrders
+
 
 
 
