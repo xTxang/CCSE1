@@ -47,7 +47,7 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Movie Rentals</title>
+    <title>SwiftCart</title>
     <link href="/static/CSS/main.css" rel="stylesheet" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -57,32 +57,16 @@
     /> -->
   </head>
 
-<!-- 
-<form action="/login" method="post">
-  <label for="username">Username:</label>
-  <input type="text" id="username" name="username" required>
-  <br>
-  <label for="password">Password:</label>
-  <input type="password" id="password" name="password"
-  required>
-  <br>
-  <button type="submit" name="action" value="login">Login</button>
-  <button type="submit" name="action" value="signup">Sign up</button>
-  {% if failed_login %}
-  <p>Invalid Username or Password</p>
-  {% endif %}
-  {% if error %}
-  <p>Invalid Username or Password.</p>
-  {% endif %}
-  {% if failed_signup %}
-  <p>Invalid credentials. Usernames and passwords must be a minimum length of 8 characters and passwords require a number</p>
-  {% endif %} -->
-
-<!-- 
-
-  /* From Uiverse.io by Yaya12085 */  -->
+  <script>
+    function homeClick() {
+      location.replace('./index')
+    }
+  </script>
 
 <body id="formBody">
+  <div class = 'topnav'>
+    <img src = "/static/CSS/image-removebg-preview.png" alt="Home Button" onclick="homeClick()" style="width: 150px; height: auto;">
+  </div>
 
   <div class="form-container">
     <p class="title">Login</p>

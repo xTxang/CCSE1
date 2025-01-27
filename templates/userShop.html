@@ -1,13 +1,11 @@
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E-commerce Main Page</title>
+
     
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Movie Rentals</title>
+    <title>SwiftCart</title>
     <link href="/static/CSS/main.css" rel="stylesheet" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -16,34 +14,42 @@
       href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&amp;display=swap"
       rel="stylesheet"
     />
+
+
+    <!-- redirects user to home when pressing the home image -->
+    <script>
+      function homeClick() {
+        location.replace('/shop/{{ userId }}')
+      }
+    </script>
+
+
   </head>
   <body id = 'shopBody'>
-    <div class = 'headerbar'>
-      <a class="leftButton" href = './shop.html'>Home</a>
-      <a class="leftButton" href = '/userDash/{{ userId }}'>User Dashboard</a>
+    <div class = 'topnav'>
+      <img src = "/static/CSS/image-removebg-preview.png" alt="Home Button" onclick="homeClick()" style="width: 150px; height: auto;">
+      <div class = "topnav-right">
+      <a class="basketButton" href='/userDash/{{ userId }}'>User Dashboard</a>
       <a class="basketButton" href="/basket/{{ userId }}">Basket</a>
-      <span class="basket-count">{{ basket_count }}</span>
-      <a class="leftButton" href="/logout">Logout</a>
+      <a class="basketButton" href="/logout">Logout</a>
+      </div>
     </div>
 
     <h1>Welcome back, {{unencryptedName}}</h1>
     <div class="product-container">
       {% for product in products %}
+      {% if product.productAvailability == 1 %}
       <div class="product-box">
         <form action="/shop/{{ userId }}" method="POST">
-        <!-- <img src="images\784px-Card_spade.svg-1473127101.jpg" alt="Product Name" class="product-image"> -->
+        <img src="/static/CSS/images/{{ product.productImg }}.png" alt='{{ product.productImg}}'>
         <h3 class="title">{{ product.productName }}</h3>
-        <!-- TODO add product description if time  -->
         <p class="product-price">£{{ product.productCost }}</p>
-        <input class = "productInput" type="number" id="quant" name="quant" required min="1" value="1">
-            <!-- Hidden field for productId -->
+        <input class = "productInput" type="number" id="quant" name="quant" min="1" max ="{{ product.productQuant }}" value="1" required >
         <input type="hidden" name="productId" value="{{ product.productID }}">
-
         <button type="submit">Add to Cart</button>
-    
         </form>
-     
       </div>
+      {% endif %}
       {% endfor %}
     </div>
 

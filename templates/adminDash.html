@@ -3,12 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Basket</title>
+    <title>SwiftCart</title>
     <link rel="stylesheet" href="/static/CSS/main.css">
+
+
+    <script>
+        function homeClick() {
+          location.replace('/admin')
+        }
+      </script>
 </head>
 <body>
     <div class = 'headerbar'>
-        <a class="leftButton" href = './shop.html'>Home</a>
+        <img src = "./static/CSS/image-removebg-preview.png" alt="Home Button" onclick="homeClick()" style="width: 150px; height: auto;">
         <a class="leftButton" href="/logout">Logout</a>
       </div>
     
@@ -44,10 +51,7 @@
             <!-- Hidden input allows for product ID to be retrieved when either remove or change quantity is pressed. From this, item can be found in db -->
             <input type="hidden" name="productID" value="{{ product.productID }}">
         </form>
-
-
         {% endfor %}
-
     {% endif %}
 
     {% if action == "add" %}

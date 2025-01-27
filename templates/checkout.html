@@ -14,16 +14,22 @@
     />
   </head>
 
+  <script>
+    function homeClick() {
+      location.replace('/shop/{{ userId }}')
+    }
+  </script>
+
+
   <!-- TODO stripe functionality? -->
  
 <body id="formBody"> 
-    <div class = 'headerbar'>
-        <a class="leftButton" href = './shop.html'>Home</a>
-        <a class="leftButton" href = './login.html'>Exit</a>
-        <a class="basketButton" href="/basket/{{ userId }}">Basket</a>
-        <span class="basket-count">{{ basket_count }}</span>
-        <a class="leftButton" href="/logout">Logout</a>
-      </div>
+  <div class = 'headerbar'>
+    <img src = "/static/CSS/image-removebg-preview.png" alt="Home Button" onclick="homeClick()" style="width: 150px; height: auto;">
+    <a class="leftButton" href = '/userDash/{{ userId }}'>User Dashboard</a>
+    <a class="basketButton" href="/basket/{{ userId }}">Basket</a>
+    <a class="leftButton" href="/logout">Logout</a>
+  </div>
 
     {% if not paid %}
 
