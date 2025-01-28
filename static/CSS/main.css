@@ -112,16 +112,8 @@ aside {
 
 
 
-
-
-
-/* -------------------------------------------------------- */
-/* From Uiverse.io by Yaya12085 */ 
 #formBody {
   font-family: Arial, sans-serif;
-  /* background-color: rgba(17, 24, 39, 1);  */
-  /* Matches form's background theme */
-
   background-color:  #FFC8DD;
   display: flex;
   justify-content: center;
@@ -134,14 +126,20 @@ aside {
   background-color:  #FFC8DD;
 }
 
+
 /* Contains forms such as login, sign up etc */
 .form-container {
   width: 320px;
   border-radius: 0.75rem;
-  /* background-color: rgba(17, 24, 39, 1); */
   background-color: #1C1C1C;
   padding: 2rem;
   color: rgba(243, 244, 246, 1);
+
+}
+
+.headingText {
+  padding-top: 10px;
+  font-family: bubble;
 
 }
 
@@ -409,7 +407,7 @@ th, td {
 }
 
 th {
-  background-color: #8B0000; /* Dark red for headers */
+  background-color: #fb6f92; /* Dark red for headers */
   color: #fff;
   font-weight: bold;
 }
@@ -472,3 +470,24 @@ tr:hover {
 .empty-basket a:hover {
   text-decoration: underline;
 }
+
+
+
+
+/* Style for the invoice table in the user dashboard */
+.invoiceContainer{
+  margin: 20px auto;
+    padding: 20px;
+    max-width: 800px;
+    background-color: #1C1C1C;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+}
+
+.invoiceTable{
+  width: 100%;
+    border-collapse: collapse;
+    margin: 0 auto;
+}
+

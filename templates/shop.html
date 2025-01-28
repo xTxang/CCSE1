@@ -14,14 +14,12 @@
       rel="stylesheet"
     />
 
-
   <script>
     function homeClick() {
       location.replace('./index')
     }
   </script>
 
-  
   </head>
 
 
@@ -44,7 +42,7 @@
   {% for product in products %}
   {% if product.productAvailability == 1 %}
   <div class="product-box">
-    <img src="/static/CSS/images/{{ product.productImg }}.png" alt='{{ product.productImg}}'>
+    <img src="/static/CSS/images/{{ product.productImg }}" alt='{{ product.productImg}}'>
     <h3 class="title">{{ product.productName }}</h3>
     <p class="product-price">£{{ product.productCost }}</p>
     <input class="productInput" type="number" id="quant" name="quant" required>

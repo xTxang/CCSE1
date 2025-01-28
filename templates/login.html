@@ -1,45 +1,3 @@
-<!DOCTYPE html>
-<!-- <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Movie Rentals</title>
-    <link href="/styles/main.css" rel="stylesheet" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap"
-      rel="stylesheet"
-    />
-  </head>
-  <body>
-    <header>
-      <strong>Movie Rentals</strong>
-    </header>
-    <div id="main">
-      <article>
-        <h1 style="text-align: center">Welcome to Movie Rentals!</h1>
-        <div style="background-color: lightgrey; width: 40%; margin: auto; padding: 1em">
-          <form method="GET" action="/shop.html">
-            <label>Email</label><br />
-            <input type="text" name="email" style="width: 100%" />
-            <br />
-            <br />
-            <label>Password</label><br />
-            <input type="password" name="password" style="width: 100%" />
-            <br />
-            <br />
-            <div style="width: 100%; text-align: center">
-              <button type="submit" name="action" value="login" style="width: 45%">Sign In</button>
-              <button type="submit" name="action" value="login" style="width: 45%">Sign Up</button>
-            </div>
-          </form>
-        </div>
-      </article>
-    </div>
-  </body>
-</html> -->
 
 <!DOCTYPE html>
 <html lang="en">
@@ -51,13 +9,10 @@
     <link href="/static/CSS/main.css" rel="stylesheet" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- <link
-      href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap"
-      rel="stylesheet"
-    /> -->
   </head>
 
   <script>
+    // Returns a user to the home page when clicking the logo
     function homeClick() {
       location.replace('./index')
     }
@@ -73,23 +28,21 @@
     <form class="form" method = "post">
       <div class="input-group">
         <label for="username">Username</label>
-        <input type="text" name="username" id="username" required placeholder="Username">
+        <input type="text" name="username" id="username" placeholder="Username" required>
       </div>
       <div class="input-group">
         <label for="password">Password</label>
-        <input type="password" name="password" id="password" placeholder="Password">
+        <input type="password" name="password" id="password" placeholder="Password" required>
       </div>
-      <!-- <button class="sign">Sign in</button> -->
       <button class="sign" type="submit" name="action" value="login">Sign in</button>
-
     </form>
+
+    <!-- Creates the sign up URL -->
     <div class="social-message">
     <div class="line"></div>
     <p class="signup">Don't have an account?
-      <!-- <button type="submit" name="action" value="signup">Sign up</button> -->
       <a rel="noopener noreferrer" href="/signup" class="">Sign up</a>
     </p>
-
     </div>
 
     {% if failed_login %}
@@ -106,14 +59,6 @@
     </tr>
   </table>
 {% endif %}
-{% if failed_signup %}
-  <table >
-    <tr>
-      <td class = "errorCentre">Invalid credentials. Usernames and passwords must be a minimum length of 8 characters and passwords require a number.</td>
-    </tr>
-  </table>
-{% endif %}
-
   </div>
   </div>
 </form>

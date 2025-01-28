@@ -12,13 +12,6 @@ class AEScipher:
         self.iv = b'\x80^\xbc\xa6\x85\x9d\xcaY\xae\xebm\xcc\x02]\ro'
 
 
-        # self.aesKey = os.urandom(16)
-        # self.iv = os.urandom(16)
-
-    # def create_key():
-    #     aesKey = os.urandom(16)
-    #     iv = os.urandom(16)
-    #     return aesKey, iv
 
     def encrypt(self,data):#TODO put user id at string, turn back into integer to increment
         data = data.encode()#puts the data into bytes

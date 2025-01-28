@@ -22,6 +22,7 @@ class products(Base):
     productCost = Column(Float, nullable = False)
     productImg = Column(String(200), nullable=False)
     productQuant = Column(Integer, nullable=False)
+    productAvailability = Column(Boolean, nullable=False)
 
 class basket(Base):
     """intialise the basket table, containing both customers and admins"""
@@ -32,32 +33,15 @@ class basket(Base):
     basketQuant = Column(Integer, nullable=False)
     basketPrice = Column(Float, nullable=False)
     itemName = Column(String, nullable=False)
-    itemAvailability = Column(Boolean, default = True, nullable=False)
 
 
-
-# class user(Base):
-#     """intialise the user table, containing both customers and admins"""
-#     __tablename__ = "user"
-
-#      # columns in the table
-#     userID = Column(String, primary_key=True)#TODO string?
-#     userName = Column(String, nullable=False )
-#     userLogin = Column(String(200), nullable=False)
-#     userPass = Column(String(200), nullable=False)
-#     userHouse = Column(Integer, nullable=False)
-#     userStreet = Column(String(200), nullable=False)
-#     userCity = Column(String(200), nullable=False)
-#     userPostcode = Column(String(200), nullable=False)
-#     salt = Column(String, nullable = False)
-#     userType = Column(Integer, nullable = False)
 
 class user(Base):
     """intialise the user table, containing both customers and admins"""
     __tablename__ = "user"
 
         # columns in the table
-    userID = Column(Integer, primary_key=True)#TODO string?
+    userID = Column(Integer, primary_key=True)
     userName = Column(String, nullable=False )
     userLogin = Column(String, nullable=False)
     userPass = Column(String, nullable=False)
@@ -105,45 +89,25 @@ class Database():
         # Create all tables
         Base.metadata.create_all(self.engine)
         self._sessionOpen = sessionmaker(bind=self.engine)
-        # session = Session()#Creates a session instance
-        # session.commit()#
 
-        # # Query all products from the database
-        # session.close()
+
         # salt = os.urandom(16)
-
-        # new_user = user(
-        #     userID = 1,
-        #     userName= self.encryptData('AdminUser'),
-        #     userLogin=self.encryptData('Admin'), 
-        #     userPass=self.passwordHash('Admin1', salt),#already hashed, doesn't need to be encrypted
-        #     userHouse=self.encryptData('test'),
-        #     userStreet=self.encryptData('test'),
-        #     userCity=self.encryptData('test'),
-        #     userPostcode=self.encryptData('test'),
-        #     salt = salt,
-        #     userType = 2
-        # )
-        # with self._sessionOpen.begin() as session:
-        #     session.add(new_user)
-
-
-
-        # adminImplement = user(
-        #     userID = 1,
-        #     userName = 'AdminUser',
-        #     userLogin = 'Admin',
-        #     userPass = 'Admin1',
-        #     userHouse = 'test',
-        #     userStreet = 'test',
-        #     userCity = 'test',
-        #     userPostcode = 'test',
-        #     salt = 'test',
-        #     userType = 2
+        #     # Create the admin user
+        # new_admin = user(
+        #     userName=self.encryptData('Admin'),
+        #     userLogin=self.encryptData('Admin'),
+        #     userPass=self.passwordHash('Admin1', salt),
+        #     userHouse=self.encryptData("Admin House"),
+        #     userStreet=self.encryptData("Admin Street"),
+        #     userCity=self.encryptData("Admin City"),
+        #     userPostcode=self.encryptData("ADMIN123"),
+        #     salt=salt,
+        #     userType=2  # Admin user
         # )
         # with self._sessionOpen.begin() as session:
 
-        #     session.add(new_user)
+        #     session.add(new_admin)
+
 
 
     def createUser(self, username,password,name, house, street,city,postcode):
@@ -153,17 +117,15 @@ class Database():
         salt = os.urandom(16)
         hashedPassword = self.passwordHash(password, salt)
 
-        # try:
-        #     self.setuserId = self.setuserId + 1
-        # except AttributeError:
-        #     self.setuserId = 1
         with self._sessionOpen() as session:
             highestUID = session.query(func.max(user.userID)).scalar()#Used to find the highest user id in the table, increments by 1 for next ID
-        print(highestUID)
+
+            emailCheck = session.query(user).filter_by(userLogin = self.encryptData(username)).first()
+            print(emailCheck)
+
+            if emailCheck:
+                return True
         self.setuserId = highestUID + 1
-
-
-
 
         new_user = user(
             userID = self.setuserId,
@@ -190,23 +152,22 @@ class Database():
 
     def createProduct(self,productName,productCost,productImg,productQuant):
 
-        try:    
-            self.x = self.x + 1 
-        except AttributeError:
-            self.x = 1
+        with self._sessionOpen() as session:
+            highestPid = session.query(func.max(products.productID)).scalar()
 
-        print(self.x)
+        newPID = highestPid + 1
         newProduct = products(
-            productID = self.x,
+            productID = newPID,
             productName = productName,
             productCost = productCost,
             productImg = productImg,
-            productQuant = productQuant
+            productQuant = productQuant,
+            productAvailability = True
         )
 
         with self._sessionOpen.begin() as session:
             session.add(newProduct)
-        return self.x
+        return newPID
 
 
     def search_user(self, enteredUser,enteredPass):
@@ -229,7 +190,7 @@ class Database():
     def getproductfromID(self, ID):
         """Used to retrieve user data from user id, in order for user specific pages"""
         with self._sessionOpen() as session:
-            self.product_list = session.query(products).filter_by(userID=ID).first()     
+            self.product_list = session.query(products).filter_by(productID=ID).first()     
         return self.product_list
     
     def getuserfromID(self, ID):
@@ -253,10 +214,12 @@ class Database():
 
             product = session.query(products).filter_by(productID=productId).first()#Retrieve product by comparing id, used to check total in stock and price
 
+            if quantity > product.productQuant:#there is not enough stock. This should be performed via the "max" in input field
+                return False
+
             totalPrice = quantity * product.productCost
 
-            if quantity > product.productQuant:#there is not enough stock
-                return False
+            
 
             if basketItem:#if item is already in basket adds the extra amount
                 basketItem.basketQuant = basket.basketQuant + quantity
@@ -274,30 +237,43 @@ class Database():
 
     def getBasket(self,userId):
         """Runs when the basket page of a user is opened, finding all items added items linked to their ID"""
-        print(userId)
         with self._sessionOpen() as session:
             self.basketItems = session.query(basket).filter_by(userID = userId).all()
 
+        #This code checks if the item in the basket is available. If not, it removes the basket entry
+        for item in self.basketItems:
+            # Find the product linked to the basket item
+            product = session.query(products).filter_by(productID=item.productID).one_or_none()
+
+            if product:  # If product exists
+                if product.productAvailability == False:  # Check if product is unavailable
+                    # Remove the item from the basket
+                    session.delete(item)
+
+                    # Also remove the corresponding product from the productOrder table (if it exists)
+                    session.query(productOrder).filter_by(productID=item.productID).filter_by(orderID=None).delete()
+        session.commit()
         return self.basketItems
 
 
     def removeProduct(self, productId):
-        """Finds item to remove via product id, removes from database"""
+        """Finds item to remove via product id, Changes its availability and removes it from any baskets"""
 
-        with self._sessionOpen() as session:#Finds product via id, deletes and commits changes
+        with self._sessionOpen.begin() as session:#Finds product via id, deletes and commits changes
             product = session.query(products).filter_by(productID=productId).first()
+            product.productAvailability = False
+            print('inFunc')
+
 
             iteminBasket = session.query(basket).filter_by(productID = productId).all()#If the item has been removed by an admin, adds unavailable
 
-            if iteminBasket:#Checks if item is in basket, iterates through and sets availability as False
+            if iteminBasket:
                 for item in iteminBasket:
-                    item.itemAvailability = False
+                    session.delete(item)#removes item from basket if not available
             else:#The product is not in the basket of a user, no action needs to be taken
                 pass
 
-            print(product)
-            session.delete(product)
-            session.commit() 
+        session.commit() 
 
 
 
@@ -309,13 +285,14 @@ class Database():
         with self._sessionOpen() as session:#Finds product via id, changes quantity field
             product = session.query(products).filter_by(productID=productId).first()
             product.productQuant = newQuant
+            product.productAvailability = True
             print(product.productQuant)
             session.commit()
 
 
 
     def encryptData(self, data):
-        """used to encrypt data before it is added to the database"""
+        """useddec to encrypt data before it is added to the database"""
         encryptedData = encryption.encrypt(data)
         return encryptedData
 
@@ -331,7 +308,7 @@ class Database():
         """Finds a user via their ID, decrypts the relevant information and sends it back"""
         with self._sessionOpen() as session:#Finds product via id, deletes and commits changes
             foundUser = session.query(user).filter_by(userID=userId).first()
-        print(foundUser.userName)
+
         name = encryption.decrypt(foundUser.userName)
         login = encryption.decrypt(foundUser.userLogin)
         houseNum = encryption.decrypt(foundUser.userHouse) 
@@ -343,46 +320,51 @@ class Database():
 
     def addOrder(self,basketItems):
         """Adds the items in the basket to the order table after checkout"""
-
-
-        with self._sessionOpen() as session:
-            # Iterate through basket items
-            for item in basketItems:
-                try:#Finds highest order ID
+        # Iterate through basket items
+        for item in basketItems:
+            try:#Finds highest order ID
+                with self._sessionOpen() as session:
                     highestOID = session.query(func.max(order.orderID)).scalar()#Used to find the highest user id in the table, increments by 1 for next ID
-                    self.setorderId = highestOID + 1
-                except TypeError:#No orderID yet
-                    self.setorderId = 1
+                self.setorderId = highestOID + 1
+            except TypeError:#No orderID yet
+                self.setorderId = 1
 
 
 
 
-                # Add item to the orders table
-                new_order = order(
-                    orderID = self.setorderId,
-                    userID = item.userID,
-                    orderDate = datetime.now().strftime("%Y-%m-%d-%H:%M:%S.%f"),
-                    orderQuant = item.basketQuant,
-                    orderPrice = item.basketPrice 
-                )
-                session.add(new_order)
+            # Add item to the orders table
+            new_order = order(
+                orderID = self.setorderId,
+                userID = item.userID,
+                orderDate = datetime.now().strftime("%Y-%m-%d-%H:%M:%S.%f"),
+                orderQuant = item.basketQuant,
+                orderPrice = item.basketPrice 
+            )
 
-                new_product_order = productOrder(
-                    orderID = self.setorderId,
-                    productID = item.productID
-                )#adds to product order table
-                
+
+            new_product_order = productOrder(
+                orderID = self.setorderId,
+                productID = item.productID
+            )
+
+            with self._sessionOpen.begin() as session:
+                session.add(new_order)#Adds to order and productOrder tables
                 session.add(new_product_order)
-                # Remove item from the basket table
-
+            # Remove item from the basket table
                 # Update the product quantity in the product table
-                product = session.query(product).filter_by(productID=item.productID).one_or_none()
-                if product:
+                product = session.query(products).filter_by(productID=item.productID).one_or_none()#Finds the product
+
+
+                if product:#decreases the product in stock by the amount purchased
                     if product.productQuant >= item.basketQuant:
-                        product.productQuant -= item.basketQuant
+                        product.productQuant -= item.basketQuant  
+                        print(product.productQuant)
+                        if product.productQuant == 0 or product.productQuant == '0':
+                            product.productAvailability = False#Product is no longer available
                 else:#Should already check in basket
                     raise ValueError(f"Not enough stock for productID {item.productID}. Current stock: {product.productQuant}")#TODO
-                session.delete(item)
+                
+                session.delete(item)#Removes from basket
 
             # Commit changes to the database
             session.commit()
@@ -412,15 +394,12 @@ class Database():
 
     def changePassword(self,userId,newPassword):
         """Used to change a users password"""
-        print('inFunc')
         with self._sessionOpen() as session:
             changeUser = session.query(user).filter_by(userID=userId).first()
 
             hashedPassword = self.passwordHash(newPassword, changeUser.salt)
 
             changeUser.userPass = hashedPassword
-
-
             session.commit()
 
 
@@ -431,7 +410,6 @@ class Database():
 
 
         with self._sessionOpen() as session:
-            print('running')
         # Query to join the tables and retrieve the required information
             returnedOrders = (
                 session.query(
@@ -461,92 +439,3 @@ class Database():
 
 
         # If needed, you can return more detailed product information by joining with the products table
-
-
-
-
-
-
-
-
-
-
-# class initDb():#Initialises database
-#     engine = create_engine('sqlite:///database.db')#Creates database with  the name database.db
-#     # Create all tables
-#     Base.metadata.create_all(engine)
-#     Session = sessionmaker(bind=engine)
-#     session = Session()#Creates a session instance
-#     if session.query(products).count() == 0:
-#         new_product = products(
-#             productName="Example Product",
-#             productCost=999.99,
-#             productImg="example.jpg",
-#             productQuant=10
-#         )
-#         # Add to session and commit
-#         session.add(new_product)
-
-    # Add testing data for users
-    # users_data = [
-    #     user(userName="John Doe", userLogin="john_doe", userPass="password123", userHouse=123,
-    #             userStreet="Main St", userCity="Springfield", userPostcode="12345", userType=1),
-    #     user(userName="Jane Smith", userLogin="jane_smith", userPass="securepass", userHouse=456,
-    #             userStreet="Elm St", userCity="Shelbyville", userPostcode="67890", userType=2)
-    # ]
-    # session.add_all(users_data)
-
-# Add testing data for orders
-
-    # orders_data = [
-    #     order(userID=1, orderDate=20230101, orderQuant=2, orderPrice=1999.98),
-    #     order(userID=2, orderDate=20230102, orderQuant=1, orderPrice=99.99)
-    # ]
-    # session.add_all(orders_data)
-
-# Add testing data for productOrder
-
-    # product_orders_data = [
-    #     productOrder(orderID=1, productID=1),
-    #     productOrder(orderID=1, productID=2),
-    #     productOrder(orderID=2, productID=3)
-    # ]
-    # session.add_all(product_orders_data)
-
-    
-    # session.commit()#
-
-    # # Query all products from the database
-    # product_list = session.query(products).all()
-    # session.close()
-    # #return product_list
-
-    # def createUser(session, name, username, password, house, street, city, postcode, userType):
-    #     new_user = user(
-    #         userID = 4
-    #         userName=name,
-    #         userLogin=username,
-    #         userPass=password,
-    #         userHouse=house,
-    #         userStreet=street,
-    #         userCity=city,
-    #         userPostcode=postcode,
-    #         userType = 1 
-    #     )
-    #     session.add(new_user)
-
-
-
-# if __name__ == "__main__":
-#     db = Database()
-
-    # for product in product_list:   
-    #     print(f"ID: {product.productID}, Name: {product.productName}, Cost: {product.productCost}, Image: {product.productImg}, Quantity: {product.productQuant}")
-    # print(product_list)
-
-
-
-
-
-
-

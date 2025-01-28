@@ -28,15 +28,17 @@
 
   </head>
   <body id = 'formBody'>
-    <div class = 'headerbar'>
-      <img src = "./static/CSS/image-removebg-preview.png" alt="Home Button" onclick="homeClick()" style="width: 150px; height: auto;">
-      <a class="leftButton" href = '/userDash/{{ userId }}'>User Dashboard</a>
+    <div class = 'topnav'>
+      <img src = "/static/CSS/image-removebg-preview.png" alt="Home Button" onclick="homeClick()" style="width: 150px; height: auto;">
+      <div class = "topnav-right">
+      <a class="basketButton" href='/userDash/{{ userId }}'>User Dashboard</a>
       <a class="basketButton" href="/basket/{{ userId }}">Basket</a>
-      <a class="leftButton" href="/logout">Logout</a>
+      <a class="basketButton" href="/logout">Logout</a>
+      </div>
     </div>
 
 
-    {% if not info and not addressChange and not passwordChange and not emailChange%}
+    {% if not info and not addressChange and not passwordChange and not emailChange and not invoice%}
     <div class="form-container">
         <p class="title">User Dashboard options</p>
         <form action="/userDash/{{ userId }}" method="POST">
@@ -48,9 +50,8 @@
     {% endif %}
 
     {% if invoice %}
-    <div class="form-container">
-      <p class="title">Your Orders</p>
-      <table>
+    <div class="invoiceContainer">
+      <table class="invoiceTable">
           <thead>
               <tr>
                   <th>Order ID</th>
@@ -72,7 +73,7 @@
               {% endfor %}
           </tbody>
       </table>
-  </div>
+    </div>
     {% endif %}
     
 
@@ -94,7 +95,7 @@
 
     {% if addressChange %}
     <div class="form-container">
-        <p class="title">Sign Up</p>
+        <p class="title">Change address</p>
         <form action="/userDash/{{ userId }}" method="post">
 
           <div class="input-group">
@@ -144,7 +145,7 @@
 
     {% if emailChange %}
     <div class="form-container">
-        <p class="title">Sign Up</p>
+        <p class="title">Change email</p>
         <form action="/userDash/{{ userId }}" method="post">
 
           <div class="input-group">

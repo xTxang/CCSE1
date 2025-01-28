@@ -35,13 +35,13 @@
       </div>
     </div>
 
-    <h1>Welcome back, {{unencryptedName}}</h1>
+    <h1 class="headincongText">Welcome back, {{unencryptedName}}</h1>
     <div class="product-container">
       {% for product in products %}
       {% if product.productAvailability == 1 %}
       <div class="product-box">
         <form action="/shop/{{ userId }}" method="POST">
-        <img src="/static/CSS/images/{{ product.productImg }}.png" alt='{{ product.productImg}}'>
+        <img src="/static/CSS/images/{{ product.productImg }}" alt='{{ product.productImg}}'>
         <h3 class="title">{{ product.productName }}</h3>
         <p class="product-price">£{{ product.productCost }}</p>
         <input class = "productInput" type="number" id="quant" name="quant" min="1" max ="{{ product.productQuant }}" value="1" required >
