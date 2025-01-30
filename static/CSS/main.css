@@ -14,8 +14,6 @@ body {
 
 
 
-
-
 .button {
   -webkit-appearance: button;
   -moz-appearance: button;
@@ -54,7 +52,7 @@ aside {
 
 
 /* Text inside the header */
-
+/* Makes a pointer cursor show when over the home icon */
 .header img{
   cursor: pointer;
 }
@@ -77,6 +75,7 @@ aside {
   height: 100%;
 }
 
+/* changes colour when hovered over */
 .basketButton:hover{
   background-color: #FF7B9C;
 }
@@ -110,8 +109,7 @@ aside {
   float:right;
 }
 
-
-
+/* Body for form pages such as sign in, making elements in the centre of the pages */
 #formBody {
   font-family: Arial, sans-serif;
   background-color:  #FFC8DD;
@@ -122,6 +120,8 @@ aside {
   margin: 0;
 }
 
+
+/* Body for shop pages, changing background colour */
 #shopBody {
   background-color:  #FFC8DD;
 }
@@ -137,10 +137,19 @@ aside {
 
 }
 
+
 .headingText {
   padding-top: 10px;
   font-family: bubble;
 
+}
+
+.title-product {
+  text-align: center;
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 700;
+  color: #1C1C1C;
 }
 
 .title {
@@ -148,6 +157,7 @@ aside {
   font-size: 1.5rem;
   line-height: 2rem;
   font-weight: 700;
+
 }
 
 .form {

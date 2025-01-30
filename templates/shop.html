@@ -43,7 +43,7 @@
   {% if product.productAvailability == 1 %}
   <div class="product-box">
     <img src="/static/CSS/images/{{ product.productImg }}" alt='{{ product.productImg}}'>
-    <h3 class="title">{{ product.productName }}</h3>
+    <h3 class="title-product">{{ product.productName }}</h3>
     <p class="product-price">£{{ product.productCost }}</p>
     <input class="productInput" type="number" id="quant" name="quant" required>
     <form method="POST" action="/index">

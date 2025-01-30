@@ -64,8 +64,6 @@ class order(Base):
     orderDate = Column(Integer, nullable=True)
     orderQuant = Column(Integer, nullable=True)
     orderPrice = Column(Integer, nullable=True)
-
-
     # links products to users
 
 class productOrder(Base):
@@ -164,7 +162,8 @@ class Database():
 
         with self._sessionOpen() as session:
             highestPid = session.query(func.max(products.productID)).scalar()
-
+        if highestPid is None:
+            highestPid = 0
         newPID = highestPid + 1
         newProduct = products(
             productID = newPID,

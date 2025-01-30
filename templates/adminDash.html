@@ -32,13 +32,14 @@
             <button class = "sign" type = "submit" name="action"  value = "view">View and edit products</button>
             <br>
             <button class = "sign" type = "submit" name="action" value = "add">Add Products</button>
+
+            {% if newProductID %}
+            <p>A new product has been created with the ID {{newProductID}}</p>
+
+            {% endif %}
+
         </form>
     </div>
-    {% if newProductID %}
-        <p>A new product has been created with the ID {{newProductID}}</p>
-
-    {% endif %}
-
     {% endif %}
 
 
@@ -46,7 +47,7 @@
     <div class = "product-container">
         {% for product in products %}
         <div class="product-box">
-            <img src="/static/CSS/images/{{ product.productImg }}.png" alt='{{ product.productImg}}'>
+            <img src="/static/CSS/images/{{ product.productImg }}" alt='{{ product.productImg}}'>
             <h3 class="title">{{ product.productName }}</h3>
             <p>Product ID: {{ product.productID }}</p>
             <p>Quantity in Stock: {{product.productQuant}}
