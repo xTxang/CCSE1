@@ -19,7 +19,6 @@ from flask_limiter.util import get_remote_address
 #TODO make logins emails
 
 db = Database()# intialises the database object
-
 def numberCheck(word):
     """Checks if password contains a digit """
     return any(i.isdigit() for i in word)
@@ -35,17 +34,14 @@ app.config['uploadFolder'] = UPLOAD_FOLDER#Defines where images will be saved
 @app.route('/index', methods=['POST','GET'])
 def index():
     if request.method == 'POST':
-        print('post')
-
         action = request.form.get('action')
         if action == 'submit':
             print('button is pressed')
             product_list = db.returnProducts()
 
-            return render_template('shop.html',products=product_list,alert=True)
+            return render_template('shop.html',products=product_list)
 
     product_list = db.returnProducts()
-
     return render_template('shop.html', products=product_list)
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -75,7 +71,7 @@ def login():
                 return render_template('login.html', failed_login=True)
     return render_template('login.html')
 
-@app.route('/admin', methods=['GET','POST'])#TODO remove get when fully implemented
+@app.route('/admin', methods=['GET','POST'])
 def adminDash():
     """Basic route for admin functionality, facilitating adding products and editing products"""
     try:
@@ -87,9 +83,9 @@ def adminDash():
         return redirect('/index')
     if request.method == "POST":
         action = request.form.get("action")  # Get the button value
-        print(f"Action received: {action}")
+
+        product_list = db.returnProducts()
         if action == "view":
-            product_list = db.returnProducts()
             return render_template('adminDash.html', action="view", products=product_list)
         
 
@@ -99,12 +95,23 @@ def adminDash():
             db.removeProduct(productId)
              #TODO does not require change quantity
         
-        elif action == 'quantity':#Change quantity in stock of item
-            productId = request.form.get('productId')
+        elif action == 'quantity':#Open change quantity box
+            return render_template('admindash.html', action = 'view', quantity = True,products=product_list)
+
+        elif action == 'submitQuantity':#Allows admin to change quantity
+            productId = request.form.get('productID')
             newQuantity = request.form.get('quantity')
-            print(productId)
-            print(newQuantity)
             db.changeProductQuant(productId,newQuantity)
+
+
+        elif action == 'price':#Opens price change box
+            return render_template('admindash.html', action = 'view',price = True,products=product_list)
+
+        
+        elif action == 'submitPrice':
+            productId = request.form.get('productID')
+            newPrice = request.form.get('priceVal')
+            db.changeproductPrice(productId, newPrice)
            
         
         elif action == "add":#When admin wants to add a product
@@ -122,11 +129,6 @@ def adminDash():
             newProductID = db.createProduct(productName,productCost,productImg,productQuant)
 
             return render_template('adminDash.html', newProductID=newProductID)
-
-
-
-                #TODO check if there is an item with the same name?
-
     return render_template('adminDash.html', action = None)
 
 #add produtcs, change prices+stock, remove products
@@ -145,13 +147,12 @@ def signup():
         city = request.form.get('city')
         postcode = request.form.get('postcode')
 
-
-        if len(inputtedPassword) < 8 or len(inputtedUsername) < 8 or numberCheck(inputtedPassword) == False:
+        if len(inputtedPassword) < 8 or len(inputtedUsername) < 8 or numberCheck(inputtedPassword) == False:#Check email and password requriements
             return render_template('signup.html', failed_signup=True)      
         else:
             result = db.createUser(inputtedUsername,inputtedPassword,name, houseNum, street, city, postcode)
             print(result)
-            if result == True:#Email is already in use
+            if result == True:#if email is already in use
                 return render_template('signup.html', inUse = True)
             else:
                 userId =  result
@@ -169,15 +170,15 @@ def userShop(userId):
     except KeyError:
         return redirect('/index')
 
+    #Gets the user's name and products to display on the HTML
     product_list = db.returnProducts()
     unencryptedName  = db.decryptUser(userId)
 
     if request.method == 'POST':
-
         productID = request.form.get('productId')
         quantity = int(request.form.get('quant'))
-        if quantity > 2:#TODO this makes no fucking sense
-            quantity = quantity+1#because the counter starts at 1, it otherwise shows 1 below
+        if quantity > 2:#Quantity counter starts at 0, so 1 is added for the requested quantity
+            quantity = quantity+1
         db.addtoBasket(userId, productID, quantity)
 
 
@@ -259,7 +260,7 @@ def logout():
     flask.session.pop('role',None)#Removes role when a user logs out
     return redirect('/index')
 
-@app.route('/basket/<userId>')
+@app.route('/basket/<userId>', methods = ['GET','POST'])
 def basket(userId):#TODO add to the html item is unavailable
     """Redirects to the basket of a specific user when the button is pressed on their webpage"""
     try:
@@ -267,21 +268,18 @@ def basket(userId):#TODO add to the html item is unavailable
             return redirect('/index')
     except KeyError:
         return redirect('/index')
-    basketItems = db.getBasket(userId)
-
-
-    totalPrice = sum((item.basketPrice * item.basketQuant) for item in basketItems)
-
-    # for item in basketItems:#Checks if there is enough quantity in stock
-    #     product = db.getproductfromID(item.productID)
-    #     if product.productQuant < item.basketQuant:
-    #         return render_template('basket.html')#TODO fix, make the product page have a limit on quantity 
-
     
+    if request.method == "POST":
+
+        basketID = request.form.get('basketID')
+        db.removefromBasket(basketID)
+
+    basketItems = db.getBasket(userId)
+    totalPrice = sum((item.basketPrice * item.basketQuant) for item, _ in basketItems)
+
     return render_template('basket.html', basketItems=basketItems, userId=userId, totalPrice=totalPrice)
 
     
-
 if __name__ == '__main__':
     #TODO adhoc
     app.run(debug=True)

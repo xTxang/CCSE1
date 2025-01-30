@@ -52,12 +52,31 @@
             <p>Quantity in Stock: {{product.productQuant}}
             <p>Current availability: {{product.productAvailability }}</p>
             <p class="product-price">£{{ product.productCost }}</p>
-            <input class="productInput" type="number" id="quant" name="quant" required>
             <form method="POST">
             <input type="hidden" name="productID" value="{{ product.productID }}">
-            <input type="number" id="quantity-{{ product.productID }}" name="quantity" min="1" required>
+  
             <button class="sign" type = "submit" name="action" value = 'remove'>Remove Product</button>
+            <br>
             <button class="sign" type = "submit" name="action" value = 'quantity'>Change Quantity</button>
+            <br>
+            <button class="sign" type = "submit" name="action" value = 'price'>Change Price</button>
+
+            {% if quantity %}
+            <input type="hidden" name="productID" value="{{ product.productID }}">
+            <input class="productInput" type="number" id="quantity-{{ product.productID }}" name="quantity" min="1" required>
+            <br>
+            <button class="sign" type = "submit" name="action" value = 'submitQuantity'>Confirm</button>
+            {% endif %}
+
+            {% if price %}
+            <input type="hidden" name="productID" value="{{ product.productID }}">
+            <div class="input-group">
+                <label for="house">New Price: </label>
+                <input type="number" id="quantity-{{ product.productID }}" name="priceVal" min="1" required>
+              </div>
+            <button class="sign" type = "submit" name="action" value = 'submitPrice'>Confirm</button> 
+            {% endif %}
+
             </form>
         </div>
         {% endfor %}
@@ -65,21 +84,28 @@
     {% endif %}
 
     {% if action == "add" %}
+    <div class = "form-container">
+        <p class="title">Create a new product</p>
     <form method = 'POST' enctype="multipart/form-data">
+        <div class = "input-group">
         <label for="prodName">Name of product:</label>
         <input type="text" id="prodName" name="prodName" required>
-        <br>
+        </div>  
+        <div class = "input-group">
         <label for="prodCost">Cost: £</label>
         <input type="number" id="prodCost" name="prodCost" step="0.01" required>
-        <br>
+        </div>
+        <div class = "input-group">
         <label for="productImg">Product image:</label>
         <input type="file" id="productImg" name="productImg" accept="image/*" required>
-        <br>
+        </div>
+        <div class = "input-group">
         <label for="productQuant">Total Quantity:</label>
         <input type="number" id="productQuant" name="productQuant" required>
-        <br>     
-        <button type="submit" name="action" value="submitProduct" id="submit-button">Submit</button>
+        </div>   
+        <button class = "sign" type="submit" name="action" value="submitProduct" id="submit-button">Submit</button>
     </form>
+    </div>
     {% endif %}
 </body>
 </html>

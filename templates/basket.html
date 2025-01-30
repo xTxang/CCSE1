@@ -6,48 +6,52 @@
     <title>Your Basket</title>
     <link rel="stylesheet" href="/static/CSS/main.css">
 </head>
-<body>
-    <header>
-        <div class="headerbar">
-            <a class="leftButton" href="/shop/{{ userId }}">Continue Shopping</a>
-            <a class="leftButton" href="/logout">Logout</a>
+<body id ="formBody">
+    <div class = 'topnav'>
+        <img src = "/static/CSS/image-removebg-preview.png" alt="Home Button" onclick="homeClick()" style="width: 150px; height: auto;">
+        <div class = "topnav-right">
+        <a class="basketButton" href='/userDash/{{ userId }}'>User Dashboard</a>
+        <a class="basketButton" href="/basket/{{ userId }}">Basket</a>
+        <a class="basketButton" href="/logout">Logout</a>
         </div>
-    </header>
+    </div>
 
  
     <main>
         {% if basketItems %}
-        <table>
-            <thead>
+        <table class = "invoiceContainer">
+            <thead class="invoiceTable">
                 <tr>
                     <th>Item Name</th>
                     <th>Quantity</th>
+                    <th>Price per item</th>
                     <th>Price</th>
                     <th>Action</th>
                 </tr>
             </thead>
             <tbody>
-                {% for basketItem in basketItems %}
+                {% for basketItem, productName in basketItems %}
                 <tr>
-                    <td>{{ basketItem.itemName }}</td>
+                    <td>{{ productName }}</td>
                     <td>{{ basketItem.basketQuant }}</td>
-                    <td>{{ basketItem.basketPrice }}</td>
+                    <td>£{{ basketItem.basketPrice }}</td>
+                    <td>£{{ basketItem.basketPrice * basketItem.basketQuant }}</td>
                     <td class="action-buttons">
                         <form action="/basket/{{ userId }}" method="POST">
-                            <button type="submit">Remove Item</button>
+                            <input type="hidden" name="basketID" value="{{ basketItem.basketID }}">
+                            <button type="submit" name="action" value="remove">Remove Item</button>
                         </form>
                     </td>
                 </tr>
                 {% endfor %}
 
                 <tr>
-                    <td colspan="2" style="text-align: right; font-weight: bold;">Total Price:</td>
+                    <td colspan="3" style="text-align: right; font-weight: bold;">Total Price:</td>
                     <td colspan="2" style="font-weight: bold;">£{{ totalPrice }}</td>
                 </tr>
             </tbody>
         </table>
 
-        
         <div class="checkout-button">
             <form method="POST" action="/checkout/{{ userId }}">
                 <button type="submit">Proceed to Checkout</button>

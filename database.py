@@ -32,7 +32,7 @@ class basket(Base):
     productID = Column(Integer, ForeignKey("products.productID"), nullable=True)
     basketQuant = Column(Integer, nullable=False)
     basketPrice = Column(Float, nullable=False)
-    itemName = Column(String, nullable=False)
+
 
 
 
@@ -85,6 +85,8 @@ class productOrder(Base):
 
 class Database():
     def __init__(self):
+        with open('adminKey.txt','w') as file:
+            file.write(self.passwordHash('AdminKey1000',b'1').hex())
         self.engine = create_engine('sqlite:///database.db')#Creates database with  the name database.db
         # Create all tables
         Base.metadata.create_all(self.engine)
@@ -113,6 +115,12 @@ class Database():
     def createUser(self, username,password,name, house, street,city,postcode):
         """Creates a user and adds them to the database and hashes password"""
         #add admin and hashing etc
+        with open("adminkey.txt",'r') as file:
+            adminKey = file.read()
+            if self.passwordHash(password, b'1').hex() == adminKey:#Admin user
+                userType = 2
+            else:#Customer
+                userType = 1
 
         salt = os.urandom(16)
         hashedPassword = self.passwordHash(password, salt)
@@ -125,7 +133,9 @@ class Database():
 
             if emailCheck:
                 return True
-        self.setuserId = highestUID + 1
+        if highestUID is None:
+            highestUID = 0
+        self.setuserId = highestUID + 1 
 
         new_user = user(
             userID = self.setuserId,
@@ -137,7 +147,7 @@ class Database():
             userCity=self.encryptData(city),
             userPostcode=self.encryptData(postcode),
             salt = salt,
-            userType = 1
+            userType = userType
         )
         with self._sessionOpen.begin() as session:
             session.add(new_user)
@@ -179,6 +189,7 @@ class Database():
                 return None
             
     def finduserfromEmail(self,email):
+        #TODO do i need this? look above_
         """Login functionality, retrieves email and encrypts it to compare against user table"""
         encryptedEmail = self.encryptData(email)
         print(encryptedEmail)
@@ -215,12 +226,11 @@ class Database():
             product = session.query(products).filter_by(productID=productId).first()#Retrieve product by comparing id, used to check total in stock and price
 
             if quantity > product.productQuant:#there is not enough stock. This should be performed via the "max" in input field
-                return False
+                return False#TODO is price reduced
 
             totalPrice = quantity * product.productCost
 
-            
-
+        
             if basketItem:#if item is already in basket adds the extra amount
                 basketItem.basketQuant = basket.basketQuant + quantity
                 basketItem.basketPrice = basket.basketPrice + totalPrice
@@ -231,17 +241,26 @@ class Database():
                   productID = productId,
                   basketQuant = quantity,
                   basketPrice = totalPrice,
-                  itemName = product.productName
               )
             session.add(basketItem)
 
     def getBasket(self,userId):
         """Runs when the basket page of a user is opened, finding all items added items linked to their ID"""
         with self._sessionOpen() as session:
-            self.basketItems = session.query(basket).filter_by(userID = userId).all()
+            self.basketItems = (
+            session.query(
+                basket,  # Basket item
+                products.productName  # Associated product name
+            )
+            .join(products, basket.productID == products.productID)  # Join with products table
+            .filter(basket.userID == userId)  # Filter by userID
+            .all()
+        )
+
+
 
         #This code checks if the item in the basket is available. If not, it removes the basket entry
-        for item in self.basketItems:
+        for item, _ in self.basketItems:
             # Find the product linked to the basket item
             product = session.query(products).filter_by(productID=item.productID).one_or_none()
 
@@ -263,6 +282,7 @@ class Database():
             product = session.query(products).filter_by(productID=productId).first()
             product.productAvailability = False
             print('inFunc')
+            #TODO would changes not need to be commited first?
 
 
             iteminBasket = session.query(basket).filter_by(productID = productId).all()#If the item has been removed by an admin, adds unavailable
@@ -275,9 +295,11 @@ class Database():
 
         session.commit() 
 
+    def removefromBasket(self, basketID):
 
-
-
+        with self._sessionOpen.begin() as session:
+            session.delete(session.query(basket).filter_by(basketID = basketID).first())
+        session.commit()
 
     def changeProductQuant(self,productId,newQuant):
         """Changes quantity in stock of an item"""
@@ -321,7 +343,7 @@ class Database():
     def addOrder(self,basketItems):
         """Adds the items in the basket to the order table after checkout"""
         # Iterate through basket items
-        for item in basketItems:
+        for item, _ in basketItems:
             try:#Finds highest order ID
                 with self._sessionOpen() as session:
                     highestOID = session.query(func.max(order.orderID)).scalar()#Used to find the highest user id in the table, increments by 1 for next ID
@@ -336,7 +358,7 @@ class Database():
             new_order = order(
                 orderID = self.setorderId,
                 userID = item.userID,
-                orderDate = datetime.now().strftime("%Y-%m-%d-%H:%M:%S.%f"),
+                orderDate = datetime.now().strftime("%Y-%m-%d-%H:%M:%S"),
                 orderQuant = item.basketQuant,
                 orderPrice = item.basketPrice 
             )
@@ -358,7 +380,6 @@ class Database():
                 if product:#decreases the product in stock by the amount purchased
                     if product.productQuant >= item.basketQuant:
                         product.productQuant -= item.basketQuant  
-                        print(product.productQuant)
                         if product.productQuant == 0 or product.productQuant == '0':
                             product.productAvailability = False#Product is no longer available
                 else:#Should already check in basket
@@ -404,6 +425,7 @@ class Database():
 
 
     def getOrder(self, userId):
+
         """Retrieves orders for the invoice screen"""
         with self._sessionOpen() as session:
             returnedOrders = session.query(order).filter_by(userID=userId).all()
@@ -426,6 +448,15 @@ class Database():
             )
 
         return returnedOrders
+    
+
+    def changeproductPrice(self, productId, newPrice):
+        """Changes Price of an item"""
+
+        with self._sessionOpen() as session:#Finds product via id, changes quantity field
+            product = session.query(products).filter_by(productID=productId).first()
+            product.productCost = newPrice
+            session.commit()
 
 
 

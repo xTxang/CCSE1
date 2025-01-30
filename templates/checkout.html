@@ -24,15 +24,16 @@
   <!-- TODO stripe functionality? -->
  
 <body id="formBody"> 
-  <div class = 'headerbar'>
+  <div class = 'topnav'>
     <img src = "/static/CSS/image-removebg-preview.png" alt="Home Button" onclick="homeClick()" style="width: 150px; height: auto;">
-    <a class="leftButton" href = '/userDash/{{ userId }}'>User Dashboard</a>
+    <div class = "topnav-right">
+    <a class="basketButton" href='/userDash/{{ userId }}'>User Dashboard</a>
     <a class="basketButton" href="/basket/{{ userId }}">Basket</a>
-    <a class="leftButton" href="/logout">Logout</a>
+    <a class="basketButton" href="/logout">Logout</a>
+    </div>
   </div>
-
+  <!-- If a user has not paid, the payment entry screen is returned -->
     {% if not paid %}
-
   <div class="form-container">
     <p class="title">Checkout</p>
     <form action="/checkout/{{ userId }}" method="post">
@@ -55,6 +56,8 @@
   </div>
   {% endif %}
 
+
+  <!-- Displays succesfull payment messagesS -->
   {% if paid %}
   <div class = "form-container">
     <p>Payment successful! View Invoices on your user dashboard</p>
