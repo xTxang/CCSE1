@@ -42,9 +42,10 @@
       <div class="product-box">
         <form action="/shop/{{ userId }}" method="POST">
         <img src="/static/CSS/images/{{ product.productImg }}" alt='{{ product.productImg}}'>
-        <h3 class="title">{{ product.productName }}</h3>
+        <h3 class="title-product">{{ product.productName }}</h3>
         <p class="product-price">£{{ product.productCost }}</p>
         <input class = "productInput" type="number" id="quant" name="quant" min="1" max ="{{ product.productQuant }}" value="1" required >
+        <!-- Hidden input used to retrieve the productID when added to basket -->
         <input type="hidden" name="productId" value="{{ product.productID }}">
         <button type="submit">Add to Cart</button>
         </form>

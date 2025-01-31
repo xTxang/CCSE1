@@ -1,22 +1,15 @@
-from flask import Flask, request, render_template, redirect, url_for
+from flask import Flask, request, render_template, redirect
 import flask
 from database import Database #Imports session and products from database.py to populate the e-commerce
-from flask_login import LoginManager
-from flask_sqlalchemy import SQLAlchemy 
-import os
 
+import os
 #for files https://flask.palletsprojects.com/en/stable/patterns/fileuploads/
 from werkzeug.utils import secure_filename
-
-UPLOAD_FOLDER = 'static\CSS\images'
-
 from flask_limiter import Limiter#Used to limit logins for brute force attacks
 from flask_limiter.util import get_remote_address
 
-#TODO input image
-#TODO admin remove page should only show available items
-#TODO make admin dash look nicer
-#TODO make logins emails
+UPLOAD_FOLDER = 'static\CSS\images'
+
 
 db = Database()# intialises the database object
 def numberCheck(word):
@@ -30,13 +23,17 @@ limiter = Limiter(get_remote_address, app=app)#Limiter for brute force attacks.
 
 app.config['uploadFolder'] = UPLOAD_FOLDER#Defines where images will be saved
 
+#Mitigates against session hijacking
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+
 @app.route('/')
 @app.route('/index', methods=['POST','GET'])
 def index():
     if request.method == 'POST':
         action = request.form.get('action')
         if action == 'submit':
-            print('button is pressed')
+
             product_list = db.returnProducts()
 
             return render_template('shop.html',products=product_list)
@@ -48,7 +45,7 @@ def index():
 @limiter.limit('5/minute') #Limits login to 5 requests per minute to aid against brute force attacks
 def login():
     if request.method == 'POST':
-        action = request.form.get('action')  # Retrieve the value of the clicked button
+        action = request.form.get('action')  # Retrieves the value of the clicked button
         new_username = request.form.get('username')
         new_password = request.form.get('password')
 
@@ -74,7 +71,7 @@ def login():
 @app.route('/admin', methods=['GET','POST'])
 def adminDash():
     """Basic route for admin functionality, facilitating adding products and editing products"""
-    try:
+    try:#Session authentication 
         adminCheck = db.getuserfromID(flask.session['role'])
     except KeyError:
         return redirect('/index')
@@ -85,15 +82,13 @@ def adminDash():
         action = request.form.get("action")  # Get the button value
 
         product_list = db.returnProducts()
-        if action == "view":
+        if action == "view":#View products action
             return render_template('adminDash.html', action="view", products=product_list)
         
 
         elif action == 'remove':#Remove an item
             productId = request.form.get('productID')
-            print('This is the product ID:', productId)
             db.removeProduct(productId)
-             #TODO does not require change quantity
         
         elif action == 'quantity':#Open change quantity box
             return render_template('admindash.html', action = 'view', quantity = True,products=product_list)
@@ -108,7 +103,7 @@ def adminDash():
             return render_template('admindash.html', action = 'view',price = True,products=product_list)
 
         
-        elif action == 'submitPrice':
+        elif action == 'submitPrice':#Changes price of a product
             productId = request.form.get('productID')
             newPrice = request.form.get('priceVal')
             db.changeproductPrice(productId, newPrice)
@@ -118,7 +113,7 @@ def adminDash():
             return render_template('adminDash.html', action="add")
         
 
-        elif action == 'submitProduct':
+        elif action == 'submitProduct':#Retrieves product information when submitted
             productName = request.form.get('prodName')
             productCost = request.form.get('prodCost')
             file = request.files['productImg']
@@ -131,13 +126,11 @@ def adminDash():
             return render_template('adminDash.html', newProductID=newProductID)
     return render_template('adminDash.html', action = None)
 
-#add produtcs, change prices+stock, remove products
-
 
 
 @app.route('/signup', methods=['GET','POST'])
 def signup():
-    action = request.form.get('action')  # Get the value of the button
+    action = request.form.get('action')  # Gets the value of the button
     if action == 'submit':
         inputtedUsername = request.form.get('username')
         inputtedPassword = request.form.get('password')
@@ -145,20 +138,23 @@ def signup():
         houseNum = request.form.get('house')
         street = request.form.get('street')
         city = request.form.get('city')
-        postcode = request.form.get('postcode')
+        postcode = request.form.get('postcode')#Retrieve info from signup
 
         if len(inputtedPassword) < 8 or len(inputtedUsername) < 8 or numberCheck(inputtedPassword) == False:#Check email and password requriements
             return render_template('signup.html', failed_signup=True)      
-        else:
-            result = db.createUser(inputtedUsername,inputtedPassword,name, houseNum, street, city, postcode)
-            print(result)
+        else:#Creates either an admin or user
+            result,userType = db.createUser(inputtedUsername,inputtedPassword,name, houseNum, street, city, postcode)
+            print(userType)
+
             if result == True:#if email is already in use
                 return render_template('signup.html', inUse = True)
             else:
                 userId =  result
                 flask.session['role'] = userId
-                return redirect(f'/shop/{userId}')
-
+                if userType == 2:#Redirects user to either admin or customer dashboard
+                    return redirect('/admin') 
+                elif userType == 1:
+                    return redirect(f'/shop/{userId}')
     return render_template("signup.html")
 
 
@@ -185,7 +181,7 @@ def userShop(userId):
 
     return render_template('userShop.html', products=product_list, userId=userId,unencryptedName=unencryptedName[0])
 
-@app.route('/checkout/<userId>', methods=['POST'])#TODO the checkout logic
+@app.route('/checkout/<userId>', methods=['POST'])
 def checkout(userId):
     try:
         if flask.session['role'] != int(userId):
@@ -196,7 +192,7 @@ def checkout(userId):
     action = request.form.get('action')
     basketItems = db.getBasket(userId)
     if action == 'submit':
-        cardNumber = request.form.get('cardNum')#TODO card info?
+        cardNumber = request.form.get('cardNum')
         expiryDate = request.form.get('expiryDate')
         CVV = request.form.get('CVV')  
         db.addOrder(basketItems) 
@@ -261,7 +257,7 @@ def logout():
     return redirect('/index')
 
 @app.route('/basket/<userId>', methods = ['GET','POST'])
-def basket(userId):#TODO add to the html item is unavailable
+def basket(userId):
     """Redirects to the basket of a specific user when the button is pressed on their webpage"""
     try:
         if flask.session['role'] != int(userId):
@@ -275,12 +271,10 @@ def basket(userId):#TODO add to the html item is unavailable
         db.removefromBasket(basketID)
 
     basketItems = db.getBasket(userId)
-    totalPrice = sum((item.basketPrice * item.basketQuant) for item, _ in basketItems)
+    totalPrice = sum((item.basketPrice * item.basketQuant) for item, _ in basketItems)#Calculates price dynamically
 
     return render_template('basket.html', basketItems=basketItems, userId=userId, totalPrice=totalPrice)
 
     
 if __name__ == '__main__':
-    #TODO adhoc
-    app.run(debug=True)
-
+    app.run(ssl_context='adhoc')
