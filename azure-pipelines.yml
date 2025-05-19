@@ -6,7 +6,6 @@ pool:
 
 variables:
   pythonVersion: '3.10'
-  SNYK_TOKEN: $(SNYK_TOKEN)  # Set this securely in your pipeline variables
 
 stages:
 # --------------BUILD STAGE--------------
@@ -42,8 +41,9 @@ stages:
         curl -Lo snyk https://github.com/snyk/snyk/releases/download/v1.1299.0/snyk-linux
         chmod +x snyk
         export SNYK_TOKEN=$(SNYK_TOKEN)
-        ./snyk test --all-projects || true  # Allow pipeline to continue even if issues are found
+        ./snyk test --all-projects || true
       displayName: 'Run Snyk Security Scan'
+
 
 # --------------DEPLOYMENT STAGE--------------
 - stage: Deploy
@@ -74,5 +74,7 @@ stages:
   - job: ZapScan
     steps:
     - script: |
-        docker run -t owasp/zap2docker-stable zap-baseline.py -t http://your-deployed-site-url
-      displayName: 'Run OWASP ZAP Baseline Scan'
+        docker pull ghcr.io/zaproxy/zap-full-scan
+        docker run --network="host" ghcr.io/zaproxy/zap-full-scan -t http://localhost:5000
+      displayName: 'Run OWASP ZAP Full Scan'
+
