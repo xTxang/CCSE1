@@ -38,11 +38,17 @@ stages:
   - job: SecurityTest
     steps:
     - script: |
-        curl -Lo snyk https://github.com/snyk/snyk/releases/download/v1.1299.0/snyk-linux
+        curl -Lo snyk https://github.com/snyk/snyk/releases/latest/download/snyk-linux
         chmod +x snyk
-        export SNYK_TOKEN=$(SNYK_TOKEN)
-        ./snyk test --all-projects || true
+        ./snyk test --all-projects --severity-threshold=low --json > snyk-results.json || true
       displayName: 'Run Snyk Security Scan'
+      env:
+        SNYK_TOKEN: $(SNYK_TOKEN)
+
+    - publish: snyk-results.json
+      artifact: snyk-report
+      displayName: 'Publish Snyk Report'
+
 
 
 # --------------DEPLOYMENT STAGE--------------
