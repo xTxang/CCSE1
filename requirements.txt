@@ -1,0 +1,6 @@
+flask
+flask_limiter
+sqlalchemy
+cryptography
+pycryptodome
+werkzeug
