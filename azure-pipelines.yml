@@ -125,19 +125,33 @@ steps:
         nohup python app.py > server.log 2>&1 &
         sleep 10  # Wait for local server to start
         
-# ------ DYNAMIC ANALYSIS PHASE (ZAP FULLY INSIDE DOCKER CONTAINER) ------
+# ------ DYNAMIC ANALYSIS PHASE ------
   - task: Bash@3
-    displayName: 'Run ZAP Baseline Scan (Fully Inside Docker)'
+    displayName: 'Install Java + Download and Setup ZAP'
     inputs:
       targetType: 'inline'
       script: |
-        docker run -v $(pwd):/zap/wrk -t owasp/zap2docker-stable zap-baseline.py \
-          -t http://host.docker.internal:5000 \
-          -r zap_report.html
-          
+        sudo apt-get update
+        sudo apt-get install -y openjdk-17-jre-headless wget unzip python3
+        wget https://github.com/zaproxy/zaproxy/releases/download/v2.12.0/ZAP_2.12.0_Crossplatform.zip
+        unzip ZAP_2.12.0_Crossplatform.zip
+        mv ZAP_2.12.0 zap
+        chmod +x zap/zap.sh
+        wget https://raw.githubusercontent.com/zaproxy/zap-core-help/main/addons/baseline/src/main/scripts/zap-baseline.py
+
+  - task: Bash@3
+    displayName: 'Run ZAP Baseline Scan (No Docker)'
+    inputs:
+      targetType: 'inline'
+      script: |
+        zap/zap.sh -daemon -port 8090 -config api.disablekey=true &
+        sleep 20
+        python3 zap-baseline.py -t http://localhost:5000 -r zap_report.html
+
   - task: PublishPipelineArtifact@1
     displayName: 'Publish ZAP Report'
     inputs:
       targetPath: 'zap_report.html'
       artifactName: 'OWASP_ZAP_Report'
       publishLocation: 'pipeline'
+
