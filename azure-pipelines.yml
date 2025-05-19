@@ -1,12 +1,71 @@
+# # azure-pipelines.yml
+
+# trigger:
+#   branches:
+#     include:
+#       - main  # Adjust branch as needed
+
+# variables:
+#   - group: snyk-variables
+
+# pool:
+#   vmImage: 'ubuntu-latest'
+
+# steps:
+#   - task: UsePythonVersion@0
+#     inputs:
+#       versionSpec: '3.x'
+#       addToPath: true
+
+#   - script: |
+#       python -m pip install --upgrade pip
+#       pip install -r requirements.txt
+#     displayName: 'Install Python dependencies'
+
+#   - task: Bash@3
+#     displayName: 'Install Snyk CLI'
+#     inputs:
+#       targetType: 'inline'
+#       script: |
+#         curl https://static.snyk.io/cli/latest/snyk-linux -o snyk
+#         chmod +x snyk
+#         sudo mv snyk /usr/local/bin/
+
+#   - task: Bash@3
+#     displayName: 'Run Snyk auth'
+#     env:
+#       SNYK_TOKEN: $(SNYK_TOKEN)
+#     inputs:
+#       targetType: 'inline'
+#       script: |
+#         snyk auth $SNYK_TOKEN
+
+#   - task: Bash@3
+#     displayName: 'Run Snyk Code test (SAST)'
+#     inputs:
+#       targetType: 'inline'
+#       script: |
+#         snyk code test
+
+#   - task: Bash@3
+#     displayName: 'Run Snyk Open Source test (Dependencies)'
+#     inputs:
+#       targetType: 'inline'
+#       script: |
+#         snyk test --file=requirements.txt --package-manager=pip
+
+
+
+
 # azure-pipelines.yml
 
 trigger:
   branches:
     include:
-      - main  # Adjust branch as needed
+      - main  # Trigger pipeline on main branch
 
 variables:
-  - group: snyk-variables
+  - group: snyk-variables  # Contains SNYK_TOKEN
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -32,7 +91,7 @@ steps:
         sudo mv snyk /usr/local/bin/
 
   - task: Bash@3
-    displayName: 'Run Snyk auth'
+    displayName: 'Authenticate Snyk'
     env:
       SNYK_TOKEN: $(SNYK_TOKEN)
     inputs:
@@ -48,8 +107,30 @@ steps:
         snyk code test
 
   - task: Bash@3
-    displayName: 'Run Snyk Open Source test (Dependencies)'
+    displayName: 'Run Snyk Open Source test (SCA)'
     inputs:
       targetType: 'inline'
       script: |
         snyk test --file=requirements.txt --package-manager=pip
+
+  - task: Bash@3
+    displayName: 'Start Local Server in Background'
+    inputs:
+      targetType: 'inline'
+      script: |
+        nohup python app.py > server.log 2>&1 &
+        sleep 10  # Wait for server to boot
+
+  - task: Bash@3
+    displayName: 'Run OWASP ZAP Baseline Scan'
+    inputs:
+      targetType: 'inline'
+      script: |
+        docker run --network host -t owasp/zap2docker-stable zap-baseline.py \
+          -t http://localhost:5000 -r zap_report.html
+
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: 'zap_report.html'
+      artifactName: 'OWASP_ZAP_Report'
+      publishLocation: 'pipeline'
