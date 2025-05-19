@@ -126,6 +126,7 @@ steps:
         sleep 10  # Wait for local server to start
         
 # ------ DYNAMIC ANALYSIS PHASE (OWASP ZAP NO-DOCKER METHOD) ------
+
   - task: Bash@3
     displayName: 'Install Java and Unpack ZAP'
     inputs:
@@ -134,8 +135,10 @@ steps:
         sudo apt-get update
         sudo apt-get install -y openjdk-17-jre wget unzip
         wget https://github.com/zaproxy/zaproxy/releases/download/v2.13.0/ZAP_2.13.0_Crossplatform.zip
-        unzip ZAP_2.13.0_Crossplatform.zip -d zap
+        unzip ZAP_2.13.0_Crossplatform.zip
+        mv ZAP_2.13.0 zap  # Rename the extracted folder to a known name
         chmod +x zap/zap.sh
+
 
   - task: Bash@3
     displayName: 'Run ZAP Baseline Scan Locally'
