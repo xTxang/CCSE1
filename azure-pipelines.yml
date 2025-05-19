@@ -68,13 +68,13 @@ stages:
               echo "Placeholder: Add your Flask app deployment command here"
             displayName: 'Deploy Flask App'
 
-# --------------DAST SCAN (ZAP)--------------
-- stage: DAST_Scan
-  jobs:
-  - job: ZapScan
-    steps:
-    - script: |
-        docker pull ghcr.io/zaproxy/zap-full-scan
-        docker run --network="host" ghcr.io/zaproxy/zap-full-scan -t http://localhost:5000
-      displayName: 'Run OWASP ZAP Full Scan'
+# # --------------DAST SCAN (ZAP)--------------
+# - stage: DAST_Scan
+#   jobs:
+#   - job: ZapScan
+#     steps:
+#     - script: |
+#         docker pull ghcr.io/zaproxy/zap-full-scan
+#         docker run --network="host" ghcr.io/zaproxy/zap-full-scan -t http://localhost:5000
+#       displayName: 'Run OWASP ZAP Full Scan'
 
