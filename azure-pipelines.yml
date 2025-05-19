@@ -124,27 +124,24 @@ steps:
       script: |
         nohup python app.py > server.log 2>&1 &
         sleep 10  # Wait for local server to start
-
-# ------ DYNAMIC ANALYSIS PHASE (OWASP ZAP MANUAL INSTALL) ------
+        
+# ------ DYNAMIC ANALYSIS PHASE (OWASP ZAP NO-DOCKER METHOD) ------
   - task: Bash@3
-    displayName: 'Download and Unpack OWASP ZAP'
+    displayName: 'Install Java and Unpack ZAP'
     inputs:
       targetType: 'inline'
       script: |
-        wget https://github.com/zaproxy/zaproxy/releases/download/v2.13.0/ZAP_2.13.0_Linux.tar.gz
-        tar -xzf ZAP_2.13.0_Linux.tar.gz
-        mv ZAP_2.13.0 zap
+        sudo apt-get update
+        sudo apt-get install -y openjdk-17-jre wget unzip
+        wget https://github.com/zaproxy/zaproxy/releases/download/v2.13.0/ZAP_2.13.0_Crossplatform.zip
+        unzip ZAP_2.13.0_Crossplatform.zip -d zap
+        chmod +x zap/zap.sh
 
   - task: Bash@3
-    displayName: 'Run OWASP ZAP Baseline Scan'
+    displayName: 'Run ZAP Baseline Scan Locally'
     inputs:
       targetType: 'inline'
       script: |
-        zap/zap.sh -cmd -quickurl http://localhost:5000 -quickout zap_report.html -quickprogress
-
-  - task: PublishPipelineArtifact@1
-    displayName: 'Publish ZAP Report'
-    inputs:
-      targetPath: 'zap_report.html'
-      artifactName: 'OWASP_ZAP_Report'
-      publishLocation: 'pipeline'
+        zap/zap.sh -daemon -port 8090 -config api.disablekey=true &
+        sleep 20  # Give ZAP time to boot in daemon mode
+        wget https://raw.githubusercontent.com/z
