@@ -38,28 +38,26 @@ stages:
   - job: SecurityTest
     steps:
     - script: |
-        curl -Lo snyk https://github.com/snyk/snyk/releases/latest/download/snyk-linux
-        chmod +x snyk
+        npm install -g snyk
+        pip install -r requirements.txt
+      displayName: 'Install dependencies'
 
-        # Authenticate Snyk
-        ./snyk auth $SNYK_TOKEN
+    - script: |
+        snyk auth $(SNYK_TOKEN)
 
-        # Test dependencies listed in requirements.txt
-        ./snyk test --file=requirements.txt --severity-threshold=low --json > snyk-deps-results.json || true
+        # Dependency scan
+        snyk test --file=requirements.txt --severity-threshold=low --json > snyk-deps-results.json || true
 
-        # Test the actual source code for vulnerabilities
-        ./snyk code test --severity-threshold=low --json > snyk-code-results.json || true
-      displayName: 'Run Snyk Dependency and Code Security Scans'
+        # Code scan
+        snyk code test --severity-threshold=low --json > snyk-code-results.json || true
+      displayName: 'Run Snyk Dependency and Code Scans'
       env:
         SNYK_TOKEN: $(SNYK_TOKEN)
 
-    - publish: snyk-deps-results.json
-      artifact: snyk-dependency-report
-      displayName: 'Publish Snyk Dependency Report'
+    - publish: .
+      artifact: snyk-report
+      displayName: 'Publish Snyk Reports'
 
-    - publish: snyk-code-results.json
-      artifact: snyk-code-report
-      displayName: 'Publish Snyk Code Report'
 
 
 
