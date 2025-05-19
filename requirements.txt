@@ -1,6 +1,6 @@
 flask
 flask_limiter
 sqlalchemy
-cryptography
-pycryptodome
-werkzeug
+cryptography==44.0.1
+werkzeug==3.0.6
+jinja2==3.1.6
