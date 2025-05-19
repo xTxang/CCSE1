@@ -125,22 +125,22 @@ steps:
         nohup python app.py > server.log 2>&1 &
         sleep 10  # Wait for local server to start
 
-
 # ------ DYNAMIC ANALYSIS PHASE (OWASP ZAP) ------
   - task: Bash@3
-    displayName: 'Install OWASP ZAP'
+    displayName: 'Download and Unpack OWASP ZAP'
     inputs:
       targetType: 'inline'
       script: |
-        sudo apt-get update
-        sudo apt-get install -y zaproxy
+        wget https://github.com/zaproxy/zaproxy/releases/download/v2.14.0/ZAP_2.14.0_Linux.tar.gz
+        tar -xvzf ZAP_2.14.0_Linux.tar.gz
+        mv ZAP_2.14.0 zap
 
   - task: Bash@3
     displayName: 'Run OWASP ZAP Baseline Scan'
     inputs:
       targetType: 'inline'
       script: |
-        zap-baseline.py -t http://localhost:5000 -r zap_report.html
+        zap/zap.sh -cmd -quickurl http://localhost:5000 -quickout zap_report.html -quickprogress
 
   - task: PublishPipelineArtifact@1
     displayName: 'Publish ZAP Report'
