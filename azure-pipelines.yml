@@ -16,11 +16,6 @@ stages:
   jobs:
   - job: BuildJob
     steps:
-    - task: UseJava@1  # Set up Java 
-      inputs:
-        versionSpec: '11'
-        jdkArchitecture: 'x64'  
-
     - task: Maven@3  # Run a Maven build task
       inputs:
         mavenPomFile: 'pom.xml' 
