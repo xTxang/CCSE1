@@ -1,0 +1,79 @@
+# Triggers pipeline to run when push to main
+trigger:
+- main
+
+# Runs on ubuntu VM
+pool:
+  vmImage: 'ubuntu-latest'
+
+# Defines varaibles
+variables:
+  buildConfiguration: 'Release'
+
+# --------------BUILD STAGE--------------
+stages:
+- stage: Build  # Start of the Build stage
+  jobs:
+  - job: BuildJob
+    steps:
+    - task: UseJava@1  # Set up Java 
+      inputs:
+        versionSpec: '11'
+        jdkArchitecture: 'x64'  
+
+    - task: Maven@3  # Run a Maven build task
+      inputs:
+        mavenPomFile: 'pom.xml' 
+        goals: 'clean install'  
+        options: '-DskipTests' 
+
+    - publish: $(System.DefaultWorkingDirectory)/target/ 
+      artifact: drop  
+
+
+# --------------TEST STAGE--------------
+- stage: Test
+  jobs:
+  - job: SecurityTest
+    steps:
+    - script: |
+        curl -Lo snyk https://github.com/snyk/snyk/releases/download/v1.1299.0/snyk-linux
+        chmod +x snyk
+        ./snyk test
+      displayName: 'Run Snyk Security Scan'  # Downloads and runs Snyk to identify vulnerabilities in dependencies and source code
+
+
+# --------------DEPLOYMENT STAGE--------------
+
+- stage: Deploy
+  jobs:
+  - deployment: DeployToVM
+    environment: 'development'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: CopyFiles@2  # Copy all files to the staging directory
+            inputs:
+              contents: '**'  # Include all files
+              targetFolder: '$(Build.ArtifactStagingDirectory)'
+
+          - task: PublishBuildArtifacts@1  # Publish the copied files as build artifacts
+            inputs:
+              pathToPublish: '$(Build.ArtifactStagingDirectory)'
+              artifactName: 'drop'
+
+          - script: |
+              echo "Deploy application here using your method (e.g., Java JAR or Docker)"
+            displayName: 'Deploy Application'  # Placeholder step to simulate deployment
+
+#--------------POST-DEPLOYMENT SECURITY TEST (DAST)--------------
+
+- stage: DAST_Scan
+  jobs:
+  - job: ZapScan
+    steps:
+    - script: |
+        docker run -t owasp/zap2docker-stable zap-baseline.py -t http://your-deployed-site-url
+      displayName: 'Run OWASP ZAP Baseline Scan'  # Run ZAP baseline scan against your deployed web app
+      # Replace http://your-deployed-site-url with the actual deployed URL of your app
