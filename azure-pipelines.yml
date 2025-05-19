@@ -40,14 +40,26 @@ stages:
     - script: |
         curl -Lo snyk https://github.com/snyk/snyk/releases/latest/download/snyk-linux
         chmod +x snyk
-        ./snyk test --all-projects --severity-threshold=low --json > snyk-results.json || true
-      displayName: 'Run Snyk Security Scan'
+
+        # Authenticate Snyk
+        ./snyk auth $SNYK_TOKEN
+
+        # Test dependencies listed in requirements.txt
+        ./snyk test --file=requirements.txt --severity-threshold=low --json > snyk-deps-results.json || true
+
+        # Test the actual source code for vulnerabilities
+        ./snyk code test --severity-threshold=low --json > snyk-code-results.json || true
+      displayName: 'Run Snyk Dependency and Code Security Scans'
       env:
         SNYK_TOKEN: $(SNYK_TOKEN)
 
-    - publish: snyk-results.json
-      artifact: snyk-report
-      displayName: 'Publish Snyk Report'
+    - publish: snyk-deps-results.json
+      artifact: snyk-dependency-report
+      displayName: 'Publish Snyk Dependency Report'
+
+    - publish: snyk-code-results.json
+      artifact: snyk-code-report
+      displayName: 'Publish Snyk Code Report'
 
 
 
