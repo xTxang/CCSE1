@@ -43,7 +43,8 @@ stages:
       displayName: 'Install dependencies'
 
     - script: |
-        snyk auth $(SNYK_TOKEN)
+        export SNYK_TOKEN=$(SNYK_TOKEN)
+        snyk auth $SNYK_TOKEN
 
         # Dependency scan
         snyk test --file=requirements.txt --severity-threshold=low --json > snyk-deps-results.json || true
@@ -57,9 +58,6 @@ stages:
     - publish: .
       artifact: snyk-report
       displayName: 'Publish Snyk Reports'
-
-
-
 
 # --------------DEPLOYMENT STAGE--------------
 - stage: Deploy
@@ -83,6 +81,7 @@ stages:
           - script: |
               echo "Placeholder: Add your Flask app deployment command here"
             displayName: 'Deploy Flask App'
+
 
 # # --------------DAST SCAN (ZAP)--------------
 # - stage: DAST_Scan
