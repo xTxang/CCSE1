@@ -55,14 +55,12 @@
 #         snyk test --file=requirements.txt --package-manager=pip
 
 
-
-
 # azure-pipelines.yml
 
 trigger:
   branches:
     include:
-      - main  # Trigger pipeline on main branch
+      - main  # Trigger pipeline on pushes to main
 
 variables:
   - group: snyk-variables  # Contains SNYK_TOKEN
@@ -70,8 +68,10 @@ variables:
 pool:
   vmImage: 'ubuntu-latest'
 
+# ------ BUILD PHASE ------
 steps:
   - task: UsePythonVersion@0
+    displayName: 'Set Python Version'
     inputs:
       versionSpec: '3.x'
       addToPath: true
@@ -79,8 +79,10 @@ steps:
   - script: |
       python -m pip install --upgrade pip
       pip install -r requirements.txt
-    displayName: 'Install Python dependencies'
+    displayName: 'Install Python Dependencies'
 
+
+# ------ SECURITY SCANNING PHASE (SNYK) ------
   - task: Bash@3
     displayName: 'Install Snyk CLI'
     inputs:
@@ -91,7 +93,7 @@ steps:
         sudo mv snyk /usr/local/bin/
 
   - task: Bash@3
-    displayName: 'Authenticate Snyk'
+    displayName: 'Authenticate with Snyk'
     env:
       SNYK_TOKEN: $(SNYK_TOKEN)
     inputs:
@@ -100,36 +102,48 @@ steps:
         snyk auth $SNYK_TOKEN
 
   - task: Bash@3
-    displayName: 'Run Snyk Code test (SAST)'
+    displayName: 'Run Snyk Code Test (SAST)'
     inputs:
       targetType: 'inline'
       script: |
         snyk code test
 
   - task: Bash@3
-    displayName: 'Run Snyk Open Source test (SCA)'
+    displayName: 'Run Snyk Dependency Test (SCA)'
     inputs:
       targetType: 'inline'
       script: |
         snyk test --file=requirements.txt --package-manager=pip
 
+
+# ------ DEPLOYMENT PHASE ------
   - task: Bash@3
     displayName: 'Start Local Server in Background'
     inputs:
       targetType: 'inline'
       script: |
         nohup python app.py > server.log 2>&1 &
-        sleep 10  # Wait for server to boot
+        sleep 10  # Wait for local server to start
+
+
+# ------ DYNAMIC ANALYSIS PHASE (OWASP ZAP) ------
+  - task: Bash@3
+    displayName: 'Install OWASP ZAP'
+    inputs:
+      targetType: 'inline'
+      script: |
+        sudo apt-get update
+        sudo apt-get install -y zaproxy
 
   - task: Bash@3
     displayName: 'Run OWASP ZAP Baseline Scan'
     inputs:
       targetType: 'inline'
       script: |
-        docker run --network host -t owasp/zap2docker-stable zap-baseline.py \
-          -t http://localhost:5000 -r zap_report.html
+        zap-baseline.py -t http://localhost:5000 -r zap_report.html
 
   - task: PublishPipelineArtifact@1
+    displayName: 'Publish ZAP Report'
     inputs:
       targetPath: 'zap_report.html'
       artifactName: 'OWASP_ZAP_Report'
