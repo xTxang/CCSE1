@@ -1,95 +1,55 @@
+# azure-pipelines.yml
+
 trigger:
-- main
+  branches:
+    include:
+      - main  # Adjust branch as needed
+
+variables:
+  - group: snyk-variables
 
 pool:
   vmImage: 'ubuntu-latest'
 
-variables:
-  pythonVersion: '3.10'
+steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.x'
+      addToPath: true
 
-stages:
-# --------------BUILD STAGE--------------
-- stage: Build
-  jobs:
-  - job: BuildJob
-    steps:
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '$(pythonVersion)'
+  - script: |
+      python -m pip install --upgrade pip
+      pip install -r requirements.txt
+    displayName: 'Install Python dependencies'
 
-    - script: |
-        python --version
-        echo "No requirements to install; proceeding."
-      displayName: 'Set up Python (no dependencies to install)'
+  - task: Bash@3
+    displayName: 'Install Snyk CLI'
+    inputs:
+      targetType: 'inline'
+      script: |
+        curl https://static.snyk.io/cli/latest/snyk-linux -o snyk
+        chmod +x snyk
+        sudo mv snyk /usr/local/bin/
 
-    - task: CopyFiles@2
-      inputs:
-        contents: '**'
-        targetFolder: '$(Build.ArtifactStagingDirectory)'
-
-    - task: PublishBuildArtifacts@1
-      inputs:
-        pathToPublish: '$(Build.ArtifactStagingDirectory)'
-        artifactName: 'drop'
-
-# --------------TEST STAGE--------------
-- stage: Test
-  jobs:
-  - job: SecurityTest
-    steps:
-    - script: |
-        npm install -g snyk
-        pip install -r requirements.txt
-      displayName: 'Install dependencies'
-
-    - script: |
-        export SNYK_TOKEN=$(SNYK_TOKEN)
+  - task: Bash@3
+    displayName: 'Run Snyk auth'
+    env:
+      SNYK_TOKEN: $(SNYK_TOKEN)
+    inputs:
+      targetType: 'inline'
+      script: |
         snyk auth $SNYK_TOKEN
 
-        # Dependency scan
-        snyk test --file=requirements.txt --severity-threshold=low --json > snyk-deps-results.json || true
+  - task: Bash@3
+    displayName: 'Run Snyk Code test (SAST)'
+    inputs:
+      targetType: 'inline'
+      script: |
+        snyk code test
 
-        # Code scan
-        snyk code test --severity-threshold=low --json > snyk-code-results.json || true
-      displayName: 'Run Snyk Dependency and Code Scans'
-      env:
-        SNYK_TOKEN: $(SNYK_TOKEN)
-
-    - publish: .
-      artifact: snyk-report
-      displayName: 'Publish Snyk Reports'
-
-# --------------DEPLOYMENT STAGE--------------
-- stage: Deploy
-  jobs:
-  - deployment: DeployToVM
-    environment: 'development'
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          - task: CopyFiles@2
-            inputs:
-              contents: '**'
-              targetFolder: '$(Build.ArtifactStagingDirectory)'
-
-          - task: PublishBuildArtifacts@1
-            inputs:
-              pathToPublish: '$(Build.ArtifactStagingDirectory)'
-              artifactName: 'drop'
-
-          - script: |
-              echo "Placeholder: Add your Flask app deployment command here"
-            displayName: 'Deploy Flask App'
-
-
-# # --------------DAST SCAN (ZAP)--------------
-# - stage: DAST_Scan
-#   jobs:
-#   - job: ZapScan
-#     steps:
-#     - script: |
-#         docker pull ghcr.io/zaproxy/zap-full-scan
-#         docker run --network="host" ghcr.io/zaproxy/zap-full-scan -t http://localhost:5000
-#       displayName: 'Run OWASP ZAP Full Scan'
-
+  - task: Bash@3
+    displayName: 'Run Snyk Open Source test (Dependencies)'
+    inputs:
+      targetType: 'inline'
+      script: |
+        snyk test --file=requirements.txt --package-manager=pip
