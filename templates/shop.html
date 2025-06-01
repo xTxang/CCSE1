@@ -47,6 +47,7 @@
     <p class="product-price">£{{ product.productCost }}</p>
     <input class="productInput" type="number" id="quant" name="quant" required>
     <form method="POST" action="/index">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <button class="sign" type = "submit" name="action" value = 'submit'>Please login to add to cart</button>
     </form>
   </div>

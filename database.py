@@ -1,6 +1,6 @@
-from cryptography.fernet import Fernet
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey, Enum, update, Float, PrimaryKeyConstraint, Boolean, func
-from sqlalchemy.orm import declarative_base, sessionmaker, relationship, Mapped
+
+from sqlalchemy import create_engine, Column, Integer, String,ForeignKey, Float, PrimaryKeyConstraint, Boolean, func
+from sqlalchemy.orm import declarative_base, sessionmaker
 import os
 from hashlib import pbkdf2_hmac#Used for hashing
 from aesAlgorithm import AEScipher
@@ -90,36 +90,14 @@ class Database():
         Base.metadata.create_all(self.engine)
         self._sessionOpen = sessionmaker(bind=self.engine)
 
-
-        # salt = os.urandom(16)
-        #     # Create the admin user
-        # new_admin = user(
-        #     userName=self.encryptData('Admin'),
-        #     userLogin=self.encryptData('Admin'),
-        #     userPass=self.passwordHash('Admin1', salt),
-        #     userHouse=self.encryptData("Admin House"),
-        #     userStreet=self.encryptData("Admin Street"),
-        #     userCity=self.encryptData("Admin City"),
-        #     userPostcode=self.encryptData("ADMIN123"),
-        #     salt=salt,
-        #     userType=2  # Admin user
-        # )
-        # with self._sessionOpen.begin() as session:
-
-        #     session.add(new_admin)
-
-
-
     def createUser(self, username,password,name, house, street,city,postcode):
         """Creates a user and adds them to the database and hashes password"""
-        #add admin and hashing etc
         with open("adminkey.txt",'r') as file:
             adminKey = file.read()
             if self.passwordHash(password, b'1').hex() == adminKey:#Admin user
                 userType = 2
             else:#Customer
                 userType = 1
-
         salt = os.urandom(16)
         hashedPassword = self.passwordHash(password, salt)
 
@@ -127,7 +105,6 @@ class Database():
             highestUID = session.query(func.max(user.userID)).scalar()#Used to find the highest user id in the table, increments by 1 for next ID
 
             emailCheck = session.query(user).filter_by(userLogin = self.encryptData(username)).first()
-            print(emailCheck)
 
             if emailCheck:
                 return True
@@ -150,7 +127,7 @@ class Database():
         with self._sessionOpen.begin() as session:
             session.add(new_user)
 
-        return self.setuserId#returns the ID of user created
+        return self.setuserId, userType#returns the ID of user created
 
 
      
@@ -177,21 +154,10 @@ class Database():
         with self._sessionOpen.begin() as session:
             session.add(newProduct)
         return newPID
-
-
-    def search_user(self, enteredUser,enteredPass):
-        with self._sessionOpen() as session:
-            requestedUser = session.query(user).filter_by(userLogin=enteredUser, userPass=enteredPass).first()
-            if requestedUser:
-                return requestedUser
-            else:
-                return None
             
     def finduserfromEmail(self,email):
-        #TODO do i need this? look above_
         """Login functionality, retrieves email and encrypts it to compare against user table"""
         encryptedEmail = self.encryptData(email)
-        print(encryptedEmail)
         with self._sessionOpen() as session:
             matchingUser = session.query(user).filter_by(userLogin = encryptedEmail).first()
         return matchingUser
@@ -219,13 +185,13 @@ class Database():
 
     def addtoBasket(self, userId, productId, quantity):
         """adds an item from the shop page to a specific user's basket"""
-        with self._sessionOpen.begin() as session:#creataes an entry into the basket table
+        with self._sessionOpen.begin() as session:#creates an entry into the basket table
             basketItem = session.query(basket).filter_by(userID=userId, productID=productId).first()#Used to check if item is already in basket
 
             product = session.query(products).filter_by(productID=productId).first()#Retrieve product by comparing id, used to check total in stock and price
 
             if quantity > product.productQuant:#there is not enough stock. This should be performed via the "max" in input field
-                return False#TODO is price reduced
+                return False
 
             totalPrice = quantity * product.productCost
 
@@ -280,8 +246,6 @@ class Database():
         with self._sessionOpen.begin() as session:#Finds product via id, deletes and commits changes
             product = session.query(products).filter_by(productID=productId).first()
             product.productAvailability = False
-            print('inFunc')
-            #TODO would changes not need to be commited first?
 
 
             iteminBasket = session.query(basket).filter_by(productID = productId).all()#If the item has been removed by an admin, adds unavailable
@@ -318,7 +282,7 @@ class Database():
         return encryptedData
 
     def decryptData(self, datatoDecrypt):
-        #TODO for fields in object decrpyt maybe?
+
         """This function iterates through entries and decrypts them for use"""
         decryptedData = encryption.decryt(datatoDecrypt)
         
@@ -400,7 +364,7 @@ class Database():
             changeUser.userStreet = self.encryptData(street)
             changeUser.userCity = self.encryptData(city)
             changeUser.userPostcode = self.encryptData(postcode)
-            print(changeUser.userPostcode)
+
  
             session.commit()
     
@@ -456,16 +420,3 @@ class Database():
             product = session.query(products).filter_by(productID=productId).first()
             product.productCost = newPrice
             session.commit()
-
-
-
-
-
-
-
-
-
-
-
-
-        # If needed, you can return more detailed product information by joining with the products table

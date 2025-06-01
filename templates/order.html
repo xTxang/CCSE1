@@ -23,6 +23,7 @@
         <h1 style="text-align: centre">Payment Details</h1>
         <div style="background-color: lightgrey; width: 70%; margin: auto; padding: 2em">
           <form method="GET" action="/invoice.html" onsubmit="storeData()">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div>
               <span>Title:</span>
               <input type="text" id="title" />

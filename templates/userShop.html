@@ -41,6 +41,7 @@
       {% if product.productAvailability == 1 %}
       <div class="product-box">
         <form action="/shop/{{ userId }}" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <img src="/static/CSS/images/{{ product.productImg }}" alt='{{ product.productImg}}'>
         <h3 class="title-product">{{ product.productName }}</h3>
         <p class="product-price">£{{ product.productCost }}</p>

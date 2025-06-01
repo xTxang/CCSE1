@@ -26,6 +26,7 @@
   <div class="form-container">
     <p class="title">Login</p>
     <form class="form" method = "post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="input-group">
         <label for="username">Username</label>
         <input type="email" name="username" id="username" placeholder="Username" required>

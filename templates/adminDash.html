@@ -29,6 +29,7 @@
     <div class="form-container">
         <p class="title">Admin Dashboard options</p>
         <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button class = "sign" type = "submit" name="action"  value = "view">View and edit products</button>
             <br>
             <button class = "sign" type = "submit" name="action" value = "add">Add Products</button>
@@ -54,6 +55,7 @@
             <p>Current availability: {{product.productAvailability }}</p>
             <p class="product-price">£{{ product.productCost }}</p>
             <form method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="productID" value="{{ product.productID }}">
   
             <button class="sign" type = "submit" name="action" value = 'remove'>Remove Product</button>
@@ -88,6 +90,7 @@
     <div class = "form-container">
         <p class="title">Create a new product</p>
     <form method = 'POST' enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class = "input-group">
         <label for="prodName">Name of product:</label>
         <input type="text" id="prodName" name="prodName" required>

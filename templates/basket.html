@@ -38,6 +38,7 @@
                     <td>£{{ basketItem.basketPrice * basketItem.basketQuant }}</td>
                     <td class="action-buttons">
                         <form action="/basket/{{ userId }}" method="POST">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <input type="hidden" name="basketID" value="{{ basketItem.basketID }}">
                             <button type="submit" name="action" value="remove">Remove Item</button>
                         </form>
@@ -54,6 +55,7 @@
 
         <div class="checkout-button">
             <form method="POST" action="/checkout/{{ userId }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit">Proceed to Checkout</button>
             </form>
         </div>

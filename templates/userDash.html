@@ -42,6 +42,7 @@
     <div class="form-container">
         <p class="title">User Dashboard options</p>
         <form action="/userDash/{{ userId }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button class = "sign" type = "submit" name="action" value = "invoice">View invoices</button>
             <br>
             <button class = "sign" type = "submit" name="action" value = "infoChange">Change personal information</button>
@@ -83,6 +84,7 @@
     <div class ="form-container">
       <p class="title">Change your personal information:</p>
       <form action="/userDash/{{ userId }}" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button class = "sign" type ="submit" name="action" value = "address">Change address</button>
         <br>
         <button class = "sign" type ="submit" name="action" value = "password">Change Password</button>
@@ -97,6 +99,7 @@
     <div class="form-container">
         <p class="title">Change address</p>
         <form action="/userDash/{{ userId }}" method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
           <div class="input-group">
             <label for="house">House Number:</label>
@@ -127,6 +130,7 @@
     <div class="form-container">
         <p class="title">Change Password</p>
         <form action="/userDash/{{ userId }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
           <div class="input-group">
             <label for="oldPassword">Old Password:</label>
@@ -147,6 +151,7 @@
     <div class="form-container">
         <p class="title">Change email</p>
         <form action="/userDash/{{ userId }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
           <div class="input-group">
             <label for="email">New Email:</label>

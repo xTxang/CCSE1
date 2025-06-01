@@ -37,6 +37,7 @@
   <div class="form-container">
     <p class="title">Checkout</p>
     <form action="/checkout/{{ userId }}" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="input-group">
         <label for="cardNum">Card Number</label>
         <input type="text" id="cardNum" name="cardNum" required>
