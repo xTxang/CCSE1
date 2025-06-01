@@ -1,0 +1,31 @@
+name: Sync to Azure DevOps
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout GitHub repo
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch full history
+        
+    - name: Sync to Azure DevOps
+      env:
+        AZURE_DEVOPS_PAT: ${{ secrets.AZURE_DEVOPS_PAT }}
+      run: |
+        # Configure git
+        git config --global user.email "action@github.com"
+        git config --global user.name "GitHub Action"
+        
+        # Add Azure DevOps as remote
+        git remote add azure https://dev.azure.com/u5535539/_git/CCSE
+        
+        # Push to Azure DevOps
+        git push azure main --force

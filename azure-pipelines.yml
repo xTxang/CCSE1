@@ -1,19 +1,152 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
-
 trigger:
-- main
+  - main
 
 pool:
-  vmImage: ubuntu-latest
+  name: 'azureagent'
 
-steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+variables:
+  - group: login-variables # Ensure DockerhubUsername, DockerhubPAT, ACR_USERNAME, ACR_PASSWORD, SNYK_TOKEN are in this group or otherwise accessible
+  - name: IMAGE_NAME
+    value: 'my-flask-app'
+  - name: IMAGE_TAG
+    value: '$(Build.BuildId)'
+  - name: PYTHON
+    value: '/usr/bin/python3.10'
+  - name: ACR_NAME
+    value: 'CCSEContainerReg'
+  - name: ACR_LOGIN_SERVER
+    value: 'ccsecontainerreg.azurecr.io'
+  - name: WEBAPP_NAME
+    value: 'CCSE2proj'
+  - name: RESOURCE_GROUP
+    value: 'azurecicd'
+  - name: WEBAPP_URL
+    value: 'https://ccse2proj-gmfcbpbyh9cmdseb.uksouth-01.azurewebsites.net' # Ensure no trailing slash
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+stages:
+  - stage: BuildPushDeployScan
+    displayName: 'Build, Push, Deploy, and Scan'
+    jobs:
+      - job: Build
+        displayName: 'Build Docker Image and Run Snyk Scan'
+        steps:
+          - checkout: self
+
+          - script: |
+              $(PYTHON) -m pip install --upgrade pip
+              $(PYTHON) -m pip install -r requirements.txt
+            displayName: 'Install Python 3.10 Dependencies'
+            
+          - task: NodeTool@0
+            inputs:
+              versionSpec: '18.x' # Or another LTS version like '20.x'
+            displayName: 'Install Node.js and npm'
+
+          - script: |
+              npm install -g snyk
+              echo "Authenticating with Snyk..."
+              snyk auth $(SNYK_TOKEN)
+              snyk code test || echo "Snyk scan found issues but continuing."
+              snyk test || echo "Snyk scan found issues but continuing."
+            displayName: 'Run Snyk Static Code Scan'
+            env:
+              SNYK_TOKEN: $(SNYK_TOKEN)
+            continueOnError: true
+
+          - script: |
+              docker build -t $(ACR_LOGIN_SERVER)/$(IMAGE_NAME):$(IMAGE_TAG) .
+            displayName: 'Build Docker Image'
+
+      - job: Push
+        displayName: 'Push Docker Image to ACR'
+        dependsOn: Build
+        condition: succeeded()
+        steps:
+          - checkout: self # Not strictly necessary here unless you need files from repo again
+          
+          - script: |
+              echo $(ACR_PASSWORD) | docker login $(ACR_LOGIN_SERVER) --username $(ACR_USERNAME) --password-stdin
+              docker push $(ACR_LOGIN_SERVER)/$(IMAGE_NAME):$(IMAGE_TAG)
+            displayName: 'Login to ACR and Push Docker Image'
+            env:
+              ACR_USERNAME: $(ACR_USERNAME)
+              ACR_PASSWORD: $(ACR_PASSWORD)
+
+      - job: Deploy
+        displayName: 'Deploy Docker Image to Azure Web App'
+        dependsOn: Push
+        condition: succeeded()
+        steps:
+          - script: |
+              az login --service-principal -u $(AZURE_CLIENT_ID) -p $(AZURE_CLIENT_SECRET) --tenant $(AZURE_TENANT_ID)
+              az webapp config container set \
+                --name $(WEBAPP_NAME) \
+                --resource-group $(RESOURCE_GROUP) \
+                --docker-custom-image-name $(ACR_LOGIN_SERVER)/$(IMAGE_NAME):$(IMAGE_TAG) \
+                --docker-registry-server-url https://$(ACR_LOGIN_SERVER) \
+                --docker-registry-server-user $(ACR_USERNAME) \
+                --docker-registry-server-password $(ACR_PASSWORD)
+              
+              echo "Deployment configured. Service will update."
+            displayName: 'Configure Azure Web App'
+            env:
+              ACR_USERNAME: $(ACR_USERNAME)
+              ACR_PASSWORD: $(ACR_PASSWORD)
+              AZURE_CLIENT_ID: $(AZURE_CLIENT_ID) # Add these to your 'login-variables' group
+              AZURE_CLIENT_SECRET: $(AZURE_CLIENT_SECRET) # Add these to your 'login-variables' group
+              AZURE_TENANT_ID: $(AZURE_TENANT_ID) # Add these to your 'login-variables' group
+              
+      - job: ZapScan
+        displayName: 'Run OWASP ZAP Scan'
+        dependsOn: Deploy
+        condition: succeeded() # Only run if deployment job was successful
+        steps:
+          - script: |
+              echo "Waiting for web app to be ready after deployment..."
+              sleep 180 # Wait for 3 minutes (adjust as necessary for your app's startup time)
+            displayName: 'Wait for Web App to Stabilize'
+
+          - script: |
+              echo "Pulling latest ZAP Docker image..."
+              # Updated to use the correct image name
+              docker pull zaproxy/zap-stable
+            displayName: 'Pull ZAP Docker Image'
+            continueOnError: true # Continue if pull fails (e.g., image already exists or minor network issue)
+
+          - script: |
+              echo "Creating directory for ZAP reports..."
+              # Create directory for reports if it doesn't exist
+              mkdir -p $(Pipeline.Workspace)/zap_reports 
+              echo "Directory created at: $(Pipeline.Workspace)/zap_reports"
+            displayName: 'Create ZAP Reports Directory'
+
+          - script: |
+              echo "Starting OWASP ZAP baseline scan against $(WEBAPP_URL)..."
+              
+              # Run ZAP baseline scan using the corrected image name
+              # The Docker command from ZAP documentation is used.
+              # It saves reports inside /zap/wrk in the container, which is mapped to $(Pipeline.Workspace)/zap_reports on the agent.
+              docker run --rm \
+                -v $(Pipeline.Workspace)/zap_reports:/zap/wrk/:rw \
+                -t zaproxy/zap-stable zap-baseline.py \
+                -t $(WEBAPP_URL) \
+                -r report.html \
+                -x report.xml \
+                -J report.json \
+                || echo "ZAP scan completed. Warnings or failures may be present in the report. Exit code $?"
+            displayName: 'Execute ZAP Baseline Scan'
+            continueOnError: true # Allow pipeline to continue so reports can be published
+
+          - script: |
+              echo "Checking if ZAP reports directory exists and contains files..."
+              ls -la $(Pipeline.Workspace)/zap_reports/ || echo "Reports directory is empty or doesn't exist"
+            displayName: 'Verify ZAP Reports'
+            continueOnError: true
+
+          - task: PublishPipelineArtifact@1
+            displayName: 'Publish ZAP Scan Reports'
+            inputs:
+              targetPath: '$(Pipeline.Workspace)/zap_reports'
+              artifactName: 'ZAPScanResults'
+            condition: succeededOrFailed() # Publish reports even if ZAP scan had issues
+            continueOnError: true # Don't fail the pipeline if artifact publishing fails
