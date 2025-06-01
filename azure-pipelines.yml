@@ -1,55 +1,19 @@
-# azure-pipelines.yml
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
 
 trigger:
-  branches:
-    include:
-      - main  # Adjust branch as needed
-
-variables:
-  - group: snyk-variables
+- main
 
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: ubuntu-latest
 
 steps:
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: '3.x'
-      addToPath: true
+- script: echo Hello, world!
+  displayName: 'Run a one-line script'
 
-  - script: |
-      python -m pip install --upgrade pip
-      pip install -r requirements.txt
-    displayName: 'Install Python dependencies'
-
-  - task: Bash@3
-    displayName: 'Install Snyk CLI'
-    inputs:
-      targetType: 'inline'
-      script: |
-        curl https://static.snyk.io/cli/latest/snyk-linux -o snyk
-        chmod +x snyk
-        sudo mv snyk /usr/local/bin/
-
-  - task: Bash@3
-    displayName: 'Run Snyk auth'
-    env:
-      SNYK_TOKEN: $(SNYK_TOKEN)
-    inputs:
-      targetType: 'inline'
-      script: |
-        snyk auth $SNYK_TOKEN
-
-  - task: Bash@3
-    displayName: 'Run Snyk Code test (SAST)'
-    inputs:
-      targetType: 'inline'
-      script: |
-        snyk code test
-
-  - task: Bash@3
-    displayName: 'Run Snyk Open Source test (Dependencies)'
-    inputs:
-      targetType: 'inline'
-      script: |
-        snyk test --file=requirements.txt --package-manager=pip
+- script: |
+    echo Add other tasks to build, test, and deploy your project.
+    echo See https://aka.ms/yaml
+  displayName: 'Run a multi-line script'
