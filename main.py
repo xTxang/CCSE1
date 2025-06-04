@@ -20,8 +20,16 @@ def numberCheck(word):
     return any(i.isdigit() for i in word)
 
 app = Flask(__name__)
-key_bytes = os.urandom(16)
-app.secret_key = key_bytes.hex()
+
+
+
+SECRET_KEY_FROM_ENV = os.environ.get('SECRET_KEY')
+
+if SECRET_KEY_FROM_ENV:
+    app.secret_key = SECRET_KEY_FROM_ENV
+else:
+    print("WARNING: SECRET_KEY environment variable not set. Using a dynamic key for local development.")
+    app.secret_key = os.urandom(24).hex()
 
 # Initialize CSRF protection
 csrf = CSRFProtect(app)
